@@ -1,11 +1,11 @@
+### correct url
 POST http://localhost:8080/
 Content-Type: application/x-www-form-urlencoded
 
 url=https://google.com/
 
 
-###
+### empty url
 POST http://localhost:8080/
 Content-Type: application/x-www-form-urlencoded
 
-url=https://agilix.ru/splitting
