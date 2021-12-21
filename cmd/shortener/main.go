@@ -30,7 +30,7 @@ func RequestHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("url: %s, id: %s", url, id)
 		links[id] = url
 		w.WriteHeader(http.StatusCreated)
-		fmt.Fprintln(w, fmt.Sprintf("http://localhost:8080/%s", id))
+		fmt.Fprintf(w, fmt.Sprintf("http://localhost:8080/%s", id))
 		return
 	case "GET":
 		parts := strings.Split(r.URL.String(), "/")
