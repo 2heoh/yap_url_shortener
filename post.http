@@ -1,9 +1,8 @@
-### correct url
+### text plain
 POST http://localhost:8080/
-Content-Type: application/x-www-form-urlencoded
+Content-Type: text/plain; charset=utf-8
 
-url=https://google.com/
-
+https://google.com/
 
 ### empty url
 POST http://localhost:8080/
