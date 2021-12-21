@@ -19,6 +19,10 @@ func RequestHandler(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
 		url := r.FormValue("url")
+		if url == "" {
+			http.Error(w, "empty url", http.StatusBadRequest)
+			return
+		}
 		w.WriteHeader(http.StatusCreated)
 		id := GenerateId(url)
 		log.Printf("url: %s, id: %s", url, id)
@@ -38,6 +42,7 @@ func RequestHandler(w http.ResponseWriter, r *http.Request) {
 		} else {
 			http.Error(w, "id is not found: "+parts[1], http.StatusNotFound)
 		}
+		return
 	default:
 		http.Error(w, "unknown method", http.StatusBadRequest)
 	}
