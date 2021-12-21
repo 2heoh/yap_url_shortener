@@ -1,0 +1,11 @@
+POST http://localhost:8080/
+Content-Type: application/x-www-form-urlencoded
+
+url=https://google.com/
+
+
+###
+POST http://localhost:8080/
+Content-Type: application/x-www-form-urlencoded
+
+url=https://agilix.ru/splitting
