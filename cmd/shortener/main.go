@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"hash/crc32"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -18,15 +19,17 @@ func RequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "POST":
-		url := r.FormValue("url")
-		if url == "" {
-			http.Error(w, "empty url", http.StatusBadRequest)
+		b, err := io.ReadAll(r.Body)
+		// обрабатываем ошибку
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		w.WriteHeader(http.StatusCreated)
+		url := string(b)
 		id := GenerateId(url)
 		log.Printf("url: %s, id: %s", url, id)
 		links[id] = url
+		w.WriteHeader(http.StatusCreated)
 		fmt.Fprintln(w, id)
 		return
 	case "GET":
