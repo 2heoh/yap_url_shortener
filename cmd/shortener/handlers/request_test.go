@@ -102,7 +102,9 @@ func TestRequestHandler(t *testing.T) {
 			res := w.Result()
 			defer func() {
 				err := res.Body.Close()
-				t.Errorf("Error: %v", err)
+				if err != nil {
+					t.Errorf("Error: %v", err)
+				}
 			}()
 
 			require.Equal(t, tt.expected.code, res.StatusCode)
