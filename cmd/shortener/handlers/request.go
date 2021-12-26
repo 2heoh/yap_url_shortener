@@ -35,7 +35,7 @@ func CreateHandler(links map[string]string) *Handler {
 func (h *Handler) GetUrlHandler(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if url, found := h.links[id]; found {
-		http.Redirect(w, r, url, http.StatusFound)
+		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 		return
 	}
 	http.Error(w, "id is not found: "+id, http.StatusNotFound)
