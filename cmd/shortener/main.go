@@ -6,9 +6,10 @@ import (
 	"net/http"
 )
 
+var links = map[string]string{
+	"yandex": "https://yandex.ru/",
+}
+
 func main() {
-	fs := http.FileServer(http.Dir("./assets"))
-	http.Handle("/favicon.ico", http.StripPrefix("/static/", fs))
-	http.HandleFunc("/", handlers.RequestHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Fatal(http.ListenAndServe(":8080", handlers.CreateHandler(links)))
 }

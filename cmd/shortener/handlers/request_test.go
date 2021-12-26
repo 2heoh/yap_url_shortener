@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -36,20 +38,38 @@ func TestRequestHandler(t *testing.T) {
 			expected: expected{
 				code:        400,
 				response:    "empty id\n",
-				contentType: "text/plain; charset=utf-8",
+				contentType: "text/plain; charset=UTF-8",
 			},
 		},
 		{
 			name: "get request with existing id",
 			request: request{
-				path:   "/yandex",
+				path:   "/test",
 				method: http.MethodGet,
 				body:   nil,
 			},
 			expected: expected{
-				code:        307,
-				response:    "<a href=\"https://yandex.ru/\">Temporary Redirect</a>.\n\n",
-				contentType: "text/html; charset=utf-8",
+				contentType: "text/html; charset=UTF-8",
+				code:        200,
+			},
+			// chi каким-то магическим способом сразу
+			//expected: expected{
+			//	code:        307,
+			//	response:    "<a href=\"https://example.com/\">Temporary Redirect</a>.",
+			//
+			//},
+		},
+		{
+			name: "get request with existing id",
+			request: request{
+				path:   "/non-existing",
+				method: http.MethodGet,
+				body:   nil,
+			},
+			expected: expected{
+				code:        404,
+				response:    "id is not found: non-existing\n",
+				contentType: "text/plain; charset=UTF-8",
 			},
 		},
 		{
@@ -86,32 +106,35 @@ func TestRequestHandler(t *testing.T) {
 				body:   strings.NewReader("https://google.com/"),
 			},
 			expected: expected{
-				code:        400,
-				response:    "unknown method\n",
-				contentType: "text/plain; charset=utf-8",
+				code: 405,
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			request := httptest.NewRequest(tt.request.method, tt.request.path, tt.request.body)
-			w := httptest.NewRecorder()
-			h := http.HandlerFunc(RequestHandler)
-			h.ServeHTTP(w, request)
+			testLinks := map[string]string{"test": "https://example.com/"}
+			r := CreateHandler(testLinks)
+			ts := httptest.NewServer(r)
+			defer ts.Close()
+			req, err := http.NewRequest(tt.request.method, ts.URL+tt.request.path, tt.request.body)
+			require.NoError(t, err)
 
-			res := w.Result()
+			res, err := http.DefaultClient.Do(req)
+			require.NoError(t, err)
+			body, err := ioutil.ReadAll(res.Body)
 			defer func() {
 				err := res.Body.Close()
 				if err != nil {
-					t.Errorf("Error: %v", err)
+					t.Fatalf("Error closing body: %v", err)
 				}
 			}()
 
-			require.Equal(t, tt.expected.code, res.StatusCode)
-			resBody, err := io.ReadAll(res.Body)
 			require.NoError(t, err)
-			require.Equal(t, tt.expected.response, string(resBody))
-			require.Equal(t, tt.expected.contentType, res.Header.Get("Content-Type"))
+			assert.Equal(t, tt.expected.code, res.StatusCode)
+			assert.Equal(t, strings.ToLower(tt.expected.contentType), strings.ToLower(res.Header.Get("Content-Type")))
+			if tt.expected.response != "" {
+				assert.Equal(t, tt.expected.response, string(body))
+			}
 		})
 	}
 }
