@@ -6,7 +6,7 @@ import (
 )
 
 func TestAddToRepository(t *testing.T) {
-	repository := NewUrlRepository()
+	repository := NewURLRepository()
 	repository.Add("https://example.com", "test")
 
 	url, err := repository.Get("test")

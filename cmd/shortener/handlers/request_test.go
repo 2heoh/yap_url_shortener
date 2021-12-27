@@ -2,24 +2,24 @@ package handlers
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type TestableRepo struct{}
 
-func (f *TestableRepo) Add(url, id string) {
+func (tr *TestableRepo) Add(url, id string) {
 
 }
 
-func (f *TestableRepo) Get(id string) (string, error) {
-
+func (tr *TestableRepo) Get(id string) (string, error) {
 	if id == "non-existing" {
 		return "", errors.New("id is not found: " + id)
 	}
@@ -27,8 +27,7 @@ func (f *TestableRepo) Get(id string) (string, error) {
 	return "https://example.com/", nil
 }
 
-type TestableGenerator struct {
-}
+type TestableGenerator struct{}
 
 func (tg *TestableGenerator) Generate(url string) string {
 	return "test_url"
@@ -40,11 +39,13 @@ func TestRequestHandler(t *testing.T) {
 		response    string
 		contentType string
 	}
+
 	type request struct {
 		method string
 		path   string
 		body   io.Reader
 	}
+
 	tests := []struct {
 		name     string
 		expected expected
@@ -71,6 +72,7 @@ func TestRequestHandler(t *testing.T) {
 				body:   nil,
 			},
 			expected: expected{
+				// когда text/html charset почему-то капсом
 				contentType: "text/html; charset=UTF-8",
 				code:        200,
 			},
