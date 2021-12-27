@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+	"errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"io"
@@ -11,6 +11,28 @@ import (
 	"strings"
 	"testing"
 )
+
+type TestableRepo struct{}
+
+func (f *TestableRepo) Add(url, id string) {
+
+}
+
+func (f *TestableRepo) Get(id string) (string, error) {
+
+	if id == "non-existing" {
+		return "", errors.New("id is not found: " + id)
+	}
+
+	return "https://example.com/", nil
+}
+
+type TestableGenerator struct {
+}
+
+func (tg *TestableGenerator) Generate(url string) string {
+	return "test_url"
+}
 
 func TestRequestHandler(t *testing.T) {
 	type expected struct {
@@ -38,7 +60,7 @@ func TestRequestHandler(t *testing.T) {
 			expected: expected{
 				code:        400,
 				response:    "empty id\n",
-				contentType: "text/plain; charset=UTF-8",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 		{
@@ -52,7 +74,8 @@ func TestRequestHandler(t *testing.T) {
 				contentType: "text/html; charset=UTF-8",
 				code:        200,
 			},
-			// chi каким-то магическим способом сразу
+			// chi каким-то магическим способом сразу умадряется отдавать страницу
+			// что тут проверять не очень понятно
 			//expected: expected{
 			//	code:        307,
 			//	response:    "<a href=\"https://example.com/\">Temporary Redirect</a>.",
@@ -60,7 +83,7 @@ func TestRequestHandler(t *testing.T) {
 			//},
 		},
 		{
-			name: "get request with existing id",
+			name: "get request with not-existing id",
 			request: request{
 				path:   "/non-existing",
 				method: http.MethodGet,
@@ -69,7 +92,7 @@ func TestRequestHandler(t *testing.T) {
 			expected: expected{
 				code:        404,
 				response:    "id is not found: non-existing\n",
-				contentType: "text/plain; charset=UTF-8",
+				contentType: "text/plain; charset=utf-8",
 			},
 		},
 		{
@@ -94,7 +117,7 @@ func TestRequestHandler(t *testing.T) {
 			},
 			expected: expected{
 				code:        201,
-				response:    fmt.Sprintf("http://localhost:8080/%s", GenerateId("https://google.com/")),
+				response:    "http://localhost:8080/test_url",
 				contentType: "text/html; charset=utf-8",
 			},
 		},
@@ -110,10 +133,12 @@ func TestRequestHandler(t *testing.T) {
 			},
 		},
 	}
+	testRepo := &TestableRepo{}
+	testGenerator := &TestableGenerator{}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testLinks := map[string]string{"test": "https://example.com/"}
-			r := CreateHandler(testLinks)
+			r := NewHandler(testRepo, testGenerator)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 			req, err := http.NewRequest(tt.request.method, ts.URL+tt.request.path, tt.request.body)
@@ -131,7 +156,7 @@ func TestRequestHandler(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.expected.code, res.StatusCode)
-			assert.Equal(t, strings.ToLower(tt.expected.contentType), strings.ToLower(res.Header.Get("Content-Type")))
+			assert.Equal(t, tt.expected.contentType, res.Header.Get("Content-Type"))
 			if tt.expected.response != "" {
 				assert.Equal(t, tt.expected.response, string(body))
 			}
