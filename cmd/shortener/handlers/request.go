@@ -23,8 +23,8 @@ func NewHandler(repo repositories.Repository, generator services.Generator) *Han
 		urlRepository: repo,
 		idGenerator:   generator,
 	}
-	h.Use(middleware.Logger)
 
+	h.Use(middleware.Logger)
 	h.Post("/", h.PostURL)
 	h.Get("/{id}", h.GetURL)
 	h.Get("/", func(w http.ResponseWriter, request *http.Request) {
