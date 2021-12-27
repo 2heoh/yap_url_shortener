@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"fmt"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"hash/crc32"
 	"io"
 	"log"
 	"net/http"
@@ -12,19 +13,21 @@ import (
 
 type Handler struct {
 	*chi.Mux
-	links map[string]string
+	urlRepo     repositories.Repository
+	idGenerator services.Generator
 }
 
-func CreateHandler(links map[string]string) *Handler {
+func NewHandler(r repositories.Repository, generator services.Generator) *Handler {
 	h := &Handler{
-		Mux:   chi.NewMux(),
-		links: links,
+		Mux:         chi.NewMux(),
+		urlRepo:     r,
+		idGenerator: generator,
 	}
 
 	h.Use(middleware.Logger)
 
-	h.Post("/", h.PostUrlHandler)
-	h.Get("/{id}", h.GetUrlHandler)
+	h.Post("/", h.PostUrl)
+	h.Get("/{id}", h.GetUrl)
 	h.Get("/", func(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, "empty id", http.StatusBadRequest)
 	})
@@ -32,17 +35,18 @@ func CreateHandler(links map[string]string) *Handler {
 	return h
 }
 
-func (h *Handler) GetUrlHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetUrl(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-	if url, found := h.links[id]; found {
-		http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+	url, err := h.urlRepo.Get(id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-	http.Error(w, "id is not found: "+id, http.StatusNotFound)
+	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 	return
 }
 
-func (h *Handler) PostUrlHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) PostUrl(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -53,9 +57,8 @@ func (h *Handler) PostUrlHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "missed url", http.StatusBadRequest)
 		return
 	}
-	id := GenerateId(url)
-	log.Printf("url: %s, id: %s", url, id)
-	h.links[id] = url
+	id := h.idGenerator.Generate(url)
+	h.urlRepo.Add(url, id)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte(fmt.Sprintf("http://localhost:8080/%s", id)))
@@ -63,9 +66,4 @@ func (h *Handler) PostUrlHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error: %v", err)
 	}
 	return
-}
-
-func GenerateId(url string) string {
-	crc32q := crc32.MakeTable(0xD5828281)
-	return fmt.Sprintf("%08x", crc32.Checksum([]byte(url), crc32q))
 }
