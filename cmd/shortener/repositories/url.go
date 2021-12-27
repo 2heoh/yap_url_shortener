@@ -1,7 +1,7 @@
 package repositories
 
 import (
-	"errors"
+	"fmt"
 )
 
 type Repository interface {
@@ -9,24 +9,24 @@ type Repository interface {
 	Get(id string) (string, error)
 }
 
-type UrlRepository struct{}
+type URLRepository struct{}
 
 var links = map[string]string{
 	"yandex": "https://yandex.ru/",
 }
 
-func NewURLRepository() *UrlRepository {
-	return &UrlRepository{}
+func NewURLRepository() *URLRepository {
+	return &URLRepository{}
 }
 
-func (r *UrlRepository) Add(url string, id string) {
+func (r *URLRepository) Add(url string, id string) {
 	links[id] = url
 }
 
-func (r *UrlRepository) Get(id string) (string, error) {
+func (r *URLRepository) Get(id string) (string, error) {
 	if url, found := links[id]; found {
 		return url, nil
 	}
 
-	return "", errors.New("id is not found: " + id)
+	return "", fmt.Errorf("id is not found: %v", id)
 }
