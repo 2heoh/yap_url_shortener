@@ -1,7 +1,9 @@
-package handlers
+package handlers_test
 
 import (
 	"errors"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/handlers"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -13,13 +15,17 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type TestableRepo struct{}
+type TestableService struct{}
 
-func (tr *TestableRepo) Add(url, id string) {
+func (tg *TestableService) CreateURL(url string) (string, error) {
+	if url == "" {
+		return "", services.ErrEmptyURL
+	}
 
+	return "test_url", nil
 }
 
-func (tr *TestableRepo) Get(id string) (string, error) {
+func (tg *TestableService) RetrieveURL(id string) (string, error) {
 	if id == "non-existing" {
 		return "", errors.New("id is not found: " + id)
 	}
@@ -27,13 +33,9 @@ func (tr *TestableRepo) Get(id string) (string, error) {
 	return "https://example.com/", nil
 }
 
-type TestableGenerator struct{}
-
-func (tg *TestableGenerator) Generate(url string) string {
-	return "test_url"
-}
-
 func TestRequestHandler(t *testing.T) {
+	t.Parallel()
+
 	type expected struct {
 		code        int
 		response    string
@@ -135,12 +137,12 @@ func TestRequestHandler(t *testing.T) {
 			},
 		},
 	}
-	testRepo := &TestableRepo{}
-	testGenerator := &TestableGenerator{}
+	testURLService := &TestableService{}
 
 	for _, tt := range tests {
+
 		t.Run(tt.name, func(t *testing.T) {
-			r := NewHandler(testRepo, testGenerator)
+			r := handlers.NewHandler(testURLService)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 			req, err := http.NewRequest(tt.request.method, ts.URL+tt.request.path, tt.request.body)

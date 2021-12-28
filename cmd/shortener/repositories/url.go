@@ -1,32 +1,36 @@
 package repositories
 
 import (
-	"fmt"
+	"errors"
 )
 
 type Repository interface {
-	Add(url string, id string)
+	Add(id string, url string)
 	Get(id string) (string, error)
 }
 
-type URLRepository struct{}
-
-var links = map[string]string{
-	"yandex": "https://yandex.ru/",
+type URLRepository struct {
+	links map[string]string
 }
+
+var ErrNotFound = errors.New("id is not found")
 
 func NewURLRepository() *URLRepository {
-	return &URLRepository{}
+	return &URLRepository{
+		links: map[string]string{
+			"yandex": "https://yandex.ru/",
+		},
+	}
 }
 
-func (r *URLRepository) Add(url string, id string) {
-	links[id] = url
+func (r *URLRepository) Add(id string, url string) {
+	r.links[id] = url
 }
 
 func (r *URLRepository) Get(id string) (string, error) {
-	if url, found := links[id]; found {
+	if url, found := r.links[id]; found {
 		return url, nil
 	}
 
-	return "", fmt.Errorf("id is not found: %v", id)
+	return "", ErrNotFound
 }

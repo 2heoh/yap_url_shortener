@@ -6,10 +6,9 @@ import (
 )
 
 func TestIDGenerator_GenerateShouldReturnCRC32OfPassedUrl(t *testing.T) {
+	t.Parallel()
 
-	generator := NewIDGenerator()
-
-	result := generator.Generate("https://example.com")
+	result := GenerateID("https://example.com")
 
 	require.Equal(t, "96248650", result)
 }

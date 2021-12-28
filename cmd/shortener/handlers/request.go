@@ -1,27 +1,26 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
-	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
-	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"io"
 	"log"
 	"net/http"
+
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 type Handler struct {
 	*chi.Mux
-	urlRepository repositories.Repository
-	idGenerator   services.Generator
+	urls services.Shorter
 }
 
-func NewHandler(repo repositories.Repository, generator services.Generator) *Handler {
-	var h = &Handler{
-		Mux:           chi.NewMux(),
-		urlRepository: repo,
-		idGenerator:   generator,
+func NewHandler(service services.Shorter) *Handler {
+	h := &Handler{
+		Mux:  chi.NewMux(),
+		urls: service,
 	}
 
 	h.Use(middleware.Logger)
@@ -35,9 +34,7 @@ func NewHandler(repo repositories.Repository, generator services.Generator) *Han
 }
 
 func (h *Handler) GetURL(w http.ResponseWriter, r *http.Request) {
-	id := chi.URLParam(r, "id")
-	url, err := h.urlRepository.Get(id)
-
+	url, err := h.urls.RetrieveURL(chi.URLParam(r, "id"))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotFound)
 
@@ -49,23 +46,20 @@ func (h *Handler) GetURL(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 	b, err := io.ReadAll(r.Body)
-
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 
 		return
 	}
 
-	url := string(b)
+	id, err := h.urls.CreateURL(string(b))
 
-	if url == "" {
+	if errors.Is(err, services.ErrEmptyURL) {
 		http.Error(w, "missed url", http.StatusBadRequest)
 
 		return
 	}
 
-	id := h.idGenerator.Generate(url)
-	h.urlRepository.Add(url, id)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte(fmt.Sprintf("http://localhost:8080/%s", id)))

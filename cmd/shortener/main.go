@@ -13,7 +13,7 @@ func main() {
 	log.Fatal(
 		http.ListenAndServe(":8080",
 			handlers.NewHandler(
-				repositories.NewURLRepository(), services.NewIDGenerator(),
+				services.NewShorterURL(repositories.NewURLRepository()),
 			),
 		),
 	)

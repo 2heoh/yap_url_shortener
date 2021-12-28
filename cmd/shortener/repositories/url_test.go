@@ -1,13 +1,18 @@
-package repositories
+package repositories_test
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAddToRepository(t *testing.T) {
-	repository := NewURLRepository()
-	repository.Add("https://example.com", "test")
+	t.Parallel()
+
+	repository := repositories.NewURLRepository()
+
+	repository.Add("test", "https://example.com")
 
 	url, err := repository.Get("test")
 
