@@ -33,6 +33,12 @@ func (tg *TestableService) RetrieveURL(id string) (string, error) {
 	return "https://example.com/", nil
 }
 
+//type errReader int
+//
+//func (errReader) Read(p []byte) (n int, err error) {
+//	return 0, errors.New("test error")
+//}
+
 func TestRequestHandler(t *testing.T) {
 	t.Parallel()
 
@@ -74,17 +80,9 @@ func TestRequestHandler(t *testing.T) {
 				body:   nil,
 			},
 			expected: expected{
-				// когда text/html charset почему-то капсом
 				contentType: "text/html; charset=UTF-8",
 				code:        200,
 			},
-			// chi каким-то магическим способом сразу умадряется отдавать страницу
-			// что тут проверять не очень понятно
-			//expected: expected{
-			//	code:        307,
-			//	response:    "<a href=\"https://example.com/\">Temporary Redirect</a>.",
-			//
-			//},
 		},
 		{
 			name: "get request with not-existing id",
@@ -126,6 +124,58 @@ func TestRequestHandler(t *testing.T) {
 			},
 		},
 		{
+			name: "post request /api/shorten with broken json body returns 400",
+			request: request{
+				method: http.MethodPost,
+				path:   "/api/shorten",
+				body:   strings.NewReader(""),
+			},
+			expected: expected{
+				code:        400,
+				response:    `{"error":"bad json:`,
+				contentType: "application/json",
+			},
+		},
+		//{
+		//	name: "post request /api/shorten with empty body returns 400",
+		//	request: request{
+		//		method: http.MethodPost,
+		//		path:   "/api/shorten",
+		//		//body:   errReader(0),
+		//	},
+		//	expected: expected{
+		//		code:        400,
+		//		response:    `{"error":"bad json:`,
+		//		contentType: "application/json",
+		//	},
+		//},
+		{
+			name: "post request /api/shorten with json body returns json with shorten url",
+			request: request{
+				method: http.MethodPost,
+				path:   "/api/shorten",
+				body:   strings.NewReader(`{"url": "https://google.com/"}`),
+			},
+			expected: expected{
+				code:        201,
+				response:    `{"result":"http://localhost:8080/test_url"}`,
+				contentType: "application/json",
+			},
+		},
+		{
+			name: "post request /api/shorten with json with empty url returns 400",
+			request: request{
+				method: http.MethodPost,
+				path:   "/api/shorten",
+				body:   strings.NewReader(`{"url": ""}`),
+			},
+			expected: expected{
+				code:        400,
+				response:    `{"error":"missed url"}`,
+				contentType: "application/json",
+			},
+		},
+		{
 			name: "unsupported http method",
 			request: request{
 				method: http.MethodPut,
@@ -147,7 +197,6 @@ func TestRequestHandler(t *testing.T) {
 			defer ts.Close()
 			req, err := http.NewRequest(tt.request.method, ts.URL+tt.request.path, tt.request.body)
 			require.NoError(t, err)
-
 			res, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
 			body, err := ioutil.ReadAll(res.Body)
@@ -162,7 +211,7 @@ func TestRequestHandler(t *testing.T) {
 			assert.Equal(t, tt.expected.code, res.StatusCode)
 			assert.Equal(t, tt.expected.contentType, res.Header.Get("Content-Type"))
 			if tt.expected.response != "" {
-				assert.Equal(t, tt.expected.response, string(body))
+				assert.Contains(t, string(body), tt.expected.response)
 			}
 		})
 	}
