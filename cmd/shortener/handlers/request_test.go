@@ -2,8 +2,6 @@ package handlers_test
 
 import (
 	"errors"
-	"github.com/2heoh/yap_url_shortener/cmd/shortener/handlers"
-	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/handlers"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -39,20 +39,20 @@ func (tg *TestableService) RetrieveURL(id string) (string, error) {
 //	return 0, errors.New("test error")
 //}
 
+type expected struct {
+	code        int
+	response    string
+	contentType string
+}
+
+type request struct {
+	method string
+	path   string
+	body   io.Reader
+}
+
 func TestRequestHandler(t *testing.T) {
 	t.Parallel()
-
-	type expected struct {
-		code        int
-		response    string
-		contentType string
-	}
-
-	type request struct {
-		method string
-		path   string
-		body   io.Reader
-	}
 
 	tests := []struct {
 		name     string
@@ -119,7 +119,7 @@ func TestRequestHandler(t *testing.T) {
 			},
 			expected: expected{
 				code:        201,
-				response:    "http://localhost:8080/test_url",
+				response:    "http://test/test_url",
 				contentType: "text/html; charset=utf-8",
 			},
 		},
@@ -141,7 +141,7 @@ func TestRequestHandler(t *testing.T) {
 		//	request: request{
 		//		method: http.MethodPost,
 		//		path:   "/api/shorten",
-		//		//body:   errReader(0),
+		//		body:   errReader(0),
 		//	},
 		//	expected: expected{
 		//		code:        400,
@@ -158,7 +158,7 @@ func TestRequestHandler(t *testing.T) {
 			},
 			expected: expected{
 				code:        201,
-				response:    `{"result":"http://localhost:8080/test_url"}`,
+				response:    `{"result":"http://test/test_url"}`,
 				contentType: "application/json",
 			},
 		},
@@ -188,17 +188,16 @@ func TestRequestHandler(t *testing.T) {
 		},
 	}
 	testURLService := &TestableService{}
-
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			r := handlers.NewHandler(testURLService)
+			r := handlers.NewHandler(testURLService, "http://test/")
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 			req, err := http.NewRequest(tt.request.method, ts.URL+tt.request.path, tt.request.body)
 			require.NoError(t, err)
 			res, err := http.DefaultClient.Do(req)
-			require.NoError(t, err)
+			assert.NoError(t, err)
 			body, err := ioutil.ReadAll(res.Body)
 			defer func() {
 				err := res.Body.Close()
