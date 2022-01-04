@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -64,7 +65,7 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(h.baseURL + id))
+	_, err = w.Write([]byte(fmt.Sprintf("%s/%s", h.baseURL, id)))
 
 	if err != nil {
 		log.Printf("Error: %v", err)
