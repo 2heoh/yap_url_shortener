@@ -17,11 +17,16 @@ func main() {
 	}
 
 	log.Printf("Starting server at: http://%s/", cfg.ServerAddress)
+
+	var repo repositories.Repository = repositories.NewInmemoryURLRepository()
+	if cfg.FileStoragePath != "" {
+		repo = repositories.NewFileURLRepository(cfg.FileStoragePath)
+	}
 	log.Fatal(
 		http.ListenAndServe(
 			cfg.ServerAddress,
 			handlers.NewHandler(
-				services.NewShorterURL(repositories.NewFileURLRepository(cfg.FileStoragePath)),
+				services.NewShorterURL(repo),
 				cfg.BaseURL,
 			),
 		),

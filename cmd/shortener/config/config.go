@@ -33,10 +33,5 @@ func LoadEnvs() (Config, error) {
 		log.Printf("env BASE_URL is not set, took server address: %s", config.BaseURL)
 	}
 
-	if config.FileStoragePath == "" {
-		config.FileStoragePath = "./links.db"
-		log.Printf("env FILE_STORAGE_PATH is not set, links sored in: %s", config.FileStoragePath)
-	}
-
 	return config, nil
 }

@@ -51,12 +51,3 @@ func TestSetValueForFileStoragePath(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "/path/to/file", cfg.FileStoragePath)
 }
-
-func TestDefaultValueForFileStoragePathIsNotSet(t *testing.T) {
-	t.Parallel()
-
-	cfg, err := config.LoadEnvs()
-
-	require.NoError(t, err)
-	require.Equal(t, "./links.db", cfg.FileStoragePath)
-}

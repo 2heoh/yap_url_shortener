@@ -15,12 +15,13 @@ type URLRepository struct {
 
 var ErrNotFound = errors.New("id is not found")
 
-func NewURLRepository() *URLRepository {
+func NewInmemoryURLRepository() *URLRepository {
 	return &URLRepository{map[string]string{"yandex": "https://yandex.ru/"}}
 }
 
-func (r *URLRepository) Add(id string, url string) {
+func (r *URLRepository) Add(id string, url string) error {
 	r.links[id] = url
+	return nil
 }
 
 func (r *URLRepository) Get(id string) (string, error) {

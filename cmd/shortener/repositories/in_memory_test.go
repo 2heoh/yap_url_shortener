@@ -10,7 +10,7 @@ import (
 func TestAddToRepository(t *testing.T) {
 	t.Parallel()
 
-	repository := repositories.NewURLRepository()
+	repository := repositories.NewInmemoryURLRepository()
 
 	repository.Add("test", "https://example.com")
 
