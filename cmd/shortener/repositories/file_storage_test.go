@@ -40,7 +40,7 @@ func TestFileStorageWithExistingStorageAddingSameRecord(t *testing.T) {
 	err := repository.Add("a", "b")
 	require.NoError(t, err)
 
-	content, err := os.ReadFile("./test.db")
+	content, _ := os.ReadFile("./test.db")
 	require.Equal(t, "a;b\n", string(content))
 }
 
