@@ -5,7 +5,7 @@ import (
 )
 
 type Repository interface {
-	Add(id string, url string)
+	Add(id string, url string) error
 	Get(id string) (string, error)
 }
 
@@ -16,11 +16,7 @@ type URLRepository struct {
 var ErrNotFound = errors.New("id is not found")
 
 func NewURLRepository() *URLRepository {
-	return &URLRepository{
-		links: map[string]string{
-			"yandex": "https://yandex.ru/",
-		},
-	}
+	return &URLRepository{map[string]string{"yandex": "https://yandex.ru/"}}
 }
 
 func (r *URLRepository) Add(id string, url string) {

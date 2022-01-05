@@ -11,15 +11,17 @@ import (
 )
 
 func main() {
+	cfg, err := config.LoadEnvs()
+	if err != nil {
+		log.Fatalf("Error loading config: %v", err)
+	}
 
-	cfg := config.LoadEnvs()
-
-	log.Printf("Server started at: http://%s/", cfg.ServerAddress)
+	log.Printf("Starting server at: http://%s/", cfg.ServerAddress)
 	log.Fatal(
 		http.ListenAndServe(
 			cfg.ServerAddress,
 			handlers.NewHandler(
-				services.NewShorterURL(repositories.NewURLRepository()),
+				services.NewShorterURL(repositories.NewFileURLRepository(cfg.FileStoragePath)),
 				cfg.BaseURL,
 			),
 		),

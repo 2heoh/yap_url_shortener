@@ -1,21 +1,27 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
 	"github.com/caarlos0/env/v6"
 )
 
+var (
+	ErrConfigIsNotLoaded = errors.New("can't parse env")
+)
+
 type Config struct {
-	ServerAddress string `env:"SERVER_ADDRESS"`
-	BaseURL       string `env:"BASE_URL"`
+	ServerAddress   string `env:"SERVER_ADDRESS"`
+	BaseURL         string `env:"BASE_URL"`
+	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 }
 
-func LoadEnvs() Config {
+func LoadEnvs() (Config, error) {
 	var config Config
 	if err := env.Parse(&config); err != nil {
-		log.Fatal(err)
+		return config, ErrConfigIsNotLoaded
 	}
 
 	if config.ServerAddress == "" {
@@ -27,5 +33,10 @@ func LoadEnvs() Config {
 		log.Printf("env BASE_URL is not set, took server address: %s", config.BaseURL)
 	}
 
-	return config
+	if config.FileStoragePath == "" {
+		config.FileStoragePath = "./links.db"
+		log.Printf("env FILE_STORAGE_PATH is not set, links sored in: %s", config.FileStoragePath)
+	}
+
+	return config, nil
 }
