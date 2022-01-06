@@ -2,17 +2,19 @@ package repositories
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"strings"
 )
 
-type consumer struct {
-	file   *os.File
-	reader *bufio.Reader
+type NotFoundError struct {
+	key string
+}
+
+func (e *NotFoundError) Error() string {
+	return fmt.Sprintf("id is not found: %s", e.key)
 }
 
 type Row struct {
@@ -20,27 +22,82 @@ type Row struct {
 	url string
 }
 
-func (c *consumer) FindByKey(key string) (*Row, error) {
-	_, err := c.file.Seek(0, 0)
+type FileURLRepository struct {
+	io   *bufio.ReadWriter
+	file *os.File
+}
+
+func NewFileURLRepository(filename string) *FileURLRepository {
+	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
-		return nil, err
+		log.Fatalf("Producer error : %s", err)
+		return nil
 	}
-	lines, err := ioutil.ReadAll(c.file)
+
+	return &FileURLRepository{
+		file: file,
+		io:   bufio.NewReadWriter(bufio.NewReader(file), bufio.NewWriter(file)),
+	}
+}
+
+func (repo *FileURLRepository) Add(id string, url string) error {
+
+	_, err := repo.findRowByKey(id)
+
+	if err != nil && err.Error() == "id is not found: "+id {
+		fmt.Printf("new key: '%s' for '%s'\n", id, url)
+		return repo.writeRow(&Row{
+			key: id,
+			url: url,
+		})
+	}
+
+	return nil
+}
+
+func (repo *FileURLRepository) Get(key string) (string, error) {
+	row, err := repo.findRowByKey(key)
+	if err != nil {
+		return "", err
+	}
+
+	return row.url, nil
+}
+
+func (repo *FileURLRepository) findRowByKey(key string) (*Row, error) {
+	_, err := repo.file.Seek(0, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	for _, line := range strings.Split(string(lines), "\n") {
+	for {
+		line, err := repo.io.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				return nil, &NotFoundError{key: key}
+			}
+			return nil, err
+		}
+
 		if line != "" {
-			row := splitLine(line)
+			row := splitLine(strings.TrimSpace(line))
 
 			if key == row.key {
 				return row, nil
 			}
 		}
 	}
+}
 
-	return nil, errors.New("id is not found: " + key)
+func (repo *FileURLRepository) writeRow(r *Row) error {
+	line := fmt.Sprintf("%s;%s\n", r.key, r.url)
+
+	_, err := repo.io.WriteString(line)
+	if err != nil {
+		return err
+	}
+
+	return repo.io.Flush()
 }
 
 func splitLine(line string) *Row {
@@ -50,85 +107,4 @@ func splitLine(line string) *Row {
 		parts[0],
 		parts[1],
 	}
-}
-
-func NewFileURLRepository(filename string) *FileURLRepository {
-	return &FileURLRepository{
-		filename: filename,
-		reader:   NewConsumer(filename),
-		writer:   NewProducer(filename),
-	}
-}
-
-func NewProducer(filename string) *producer {
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("Producer error : %s", err)
-		return nil
-	}
-
-	return &producer{
-		file:     file,
-		filename: filename,
-		writer:   bufio.NewWriter(file),
-	}
-}
-
-func NewConsumer(filename string) *consumer {
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		log.Fatalf("Consumer error: %s", err)
-		return nil
-	}
-	return &consumer{
-		file:   file,
-		reader: bufio.NewReader(file),
-	}
-}
-
-type producer struct {
-	file     *os.File
-	writer   *bufio.Writer
-	filename string
-}
-
-func (p *producer) WriteRow(r *Row) error {
-	line := fmt.Sprintf("%s;%s\n", r.key, r.url)
-
-	_, err := p.writer.WriteString(line)
-	if err != nil {
-		return err
-	}
-
-	return p.writer.Flush()
-}
-
-type FileURLRepository struct {
-	filename string
-	reader   *consumer
-	writer   *producer
-}
-
-func (r *FileURLRepository) Get(key string) (string, error) {
-	row, err := r.reader.FindByKey(key)
-	if err != nil {
-		return "", err
-	}
-
-	return row.url, nil
-}
-
-func (r *FileURLRepository) Add(id string, url string) error {
-
-	_, err := r.reader.FindByKey(id)
-
-	if err != nil && err.Error() == "id is not found: "+id {
-		fmt.Printf("new key: '%s' for '%s'\n", id, url)
-		return r.writer.WriteRow(&Row{
-			key: id,
-			url: url,
-		})
-	}
-
-	return nil
 }

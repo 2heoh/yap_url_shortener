@@ -28,12 +28,13 @@ func TestFileStorageNonEmptyStorageWriteAndReadOneURL(t *testing.T) {
 }
 
 func TestFileStorageEmptyStorageWriteAndReadTwoURLs(t *testing.T) {
-	//os.WriteFile("/tmp/mcquE", []byte(""), 0666)
-	//defer func() {
-	//	if !t.Failed() {
-	//		os.Remove("/tmp/mcquE")
-	//	}
-	//}()
+
+	os.WriteFile("./test_empty.db", []byte(""), 0666)
+	defer func() {
+		if !t.Failed() {
+			os.Remove("./test_empty.db")
+		}
+	}()
 
 	repository := repositories.NewFileURLRepository("./test.db")
 
