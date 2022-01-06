@@ -40,10 +40,6 @@ func (c *consumer) FindByKey(key string) (*Row, error) {
 		}
 	}
 
-	if err != nil {
-		return nil, err
-	}
-
 	return nil, errors.New("id is not found: " + key)
 }
 
