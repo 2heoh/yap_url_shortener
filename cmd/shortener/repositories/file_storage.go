@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -20,7 +21,10 @@ type Row struct {
 }
 
 func (c *consumer) FindByKey(key string) (*Row, error) {
-
+	_, err := c.file.Seek(0, 0)
+	if err != nil {
+		return nil, err
+	}
 	lines, err := ioutil.ReadAll(c.file)
 	if err != nil {
 		return nil, err
@@ -36,7 +40,11 @@ func (c *consumer) FindByKey(key string) (*Row, error) {
 		}
 	}
 
-	return nil, ErrNotFound
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, errors.New("id is not found: " + key)
 }
 
 func splitLine(line string) *Row {
@@ -90,8 +98,8 @@ type producer struct {
 
 func (p *producer) WriteRow(r *Row) error {
 	line := fmt.Sprintf("%s;%s\n", r.key, r.url)
-	_, err := p.writer.WriteString(line)
 
+	_, err := p.writer.WriteString(line)
 	if err != nil {
 		return err
 	}
@@ -118,8 +126,8 @@ func (r *FileURLRepository) Add(id string, url string) error {
 
 	_, err := r.reader.FindByKey(id)
 
-	if err == ErrNotFound {
-
+	if err != nil && err.Error() == "id is not found: "+id {
+		fmt.Println("new key, not found")
 		return r.writer.WriteRow(&Row{
 			key: id,
 			url: url,
