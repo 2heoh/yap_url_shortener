@@ -90,7 +90,6 @@ type producer struct {
 
 func (p *producer) WriteRow(r *Row) error {
 	line := fmt.Sprintf("%s;%s\n", r.key, r.url)
-	//return os.WriteFile(p.filename, []byte(line), 0666)
 	_, err := p.writer.WriteString(line)
 
 	if err != nil {
@@ -98,12 +97,6 @@ func (p *producer) WriteRow(r *Row) error {
 	}
 
 	return p.writer.Flush()
-	//err =
-	//if err != nil {
-	//	return err
-	//}
-	//
-	//return p.file.Close()
 }
 
 type FileURLRepository struct {

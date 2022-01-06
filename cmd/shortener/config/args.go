@@ -6,16 +6,15 @@ import (
 )
 
 var (
-	serverAddress   = "localhost:8080"
-	baseURL         = fmt.Sprintf("http://%s", serverAddress)
-	fileStoragePath = "./links.db"
+	serverAddress = "localhost:8080"
+	baseURL       = fmt.Sprintf("http://%s", serverAddress)
 )
 
 func LoadArgs() (*Config, error) {
 	address := new(NetAddress)
 	flag.Var(address, "a", "Server address host:port")
 	bURL := flag.String("b", baseURL, "Base Url")
-	path := flag.String("f", fileStoragePath, "file storage path")
+	path := flag.String("f", "", "file storage path")
 	flag.Parse()
 
 	if address.String() == ":0" {
