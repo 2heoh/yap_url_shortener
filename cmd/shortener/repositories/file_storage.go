@@ -50,8 +50,9 @@ func splitLine(line string) *Row {
 
 func NewFileURLRepository(filename string) *FileURLRepository {
 	return &FileURLRepository{
-		reader: NewConsumer(filename),
-		writer: NewProducer(filename),
+		filename: filename,
+		reader:   NewConsumer(filename),
+		writer:   NewProducer(filename),
 	}
 }
 
@@ -63,8 +64,9 @@ func NewProducer(filename string) *producer {
 	}
 
 	return &producer{
-		file:   file,
-		writer: bufio.NewWriter(file),
+		file:     file,
+		filename: filename,
+		writer:   bufio.NewWriter(file),
 	}
 }
 
@@ -81,12 +83,14 @@ func NewConsumer(filename string) *consumer {
 }
 
 type producer struct {
-	file   *os.File
-	writer *bufio.Writer
+	file     *os.File
+	writer   *bufio.Writer
+	filename string
 }
 
 func (p *producer) WriteRow(r *Row) error {
 	line := fmt.Sprintf("%s;%s\n", r.key, r.url)
+	//return os.WriteFile(p.filename, []byte(line), 0666)
 	_, err := p.writer.WriteString(line)
 
 	if err != nil {
@@ -94,11 +98,18 @@ func (p *producer) WriteRow(r *Row) error {
 	}
 
 	return p.writer.Flush()
+	//err =
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//return p.file.Close()
 }
 
 type FileURLRepository struct {
-	reader *consumer
-	writer *producer
+	filename string
+	reader   *consumer
+	writer   *producer
 }
 
 func (r *FileURLRepository) Get(key string) (string, error) {

@@ -17,6 +17,12 @@ func LoadArgs() (*Config, error) {
 	bURL := flag.String("b", baseURL, "Base Url")
 	path := flag.String("f", fileStoragePath, "file storage path")
 	flag.Parse()
+
+	if address.String() == ":0" {
+		address.Host = "localhost"
+		address.Port = 8080
+	}
+
 	return &Config{
 		ServerAddress:   address.String(),
 		BaseURL:         *bURL,
