@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
+	"strings"
 
 	"github.com/caarlos0/env/v6"
 )
@@ -18,14 +20,34 @@ type Config struct {
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
 }
 
-func LoadEnvs() (Config, error) {
-	var config Config
-	if err := env.Parse(&config); err != nil {
+type NetAddress struct {
+	Host string
+	Port int
+}
+
+func (na *NetAddress) String() string {
+	return fmt.Sprintf("%s:%d", na.Host, na.Port)
+}
+
+func (na *NetAddress) Set(flagValue string) error {
+	parts := strings.Split(flagValue, ":")
+	na.Host = parts[0]
+	port, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return err
+	}
+	na.Port = port
+	return nil
+}
+
+func LoadEnvs(config *Config) (*Config, error) {
+
+	if err := env.Parse(config); err != nil {
 		return config, ErrConfigIsNotLoaded
 	}
 
 	if config.ServerAddress == "" {
-		config.ServerAddress = "localhost:8080"
+		config.ServerAddress = serverAddress
 	}
 
 	if config.BaseURL == "" {
