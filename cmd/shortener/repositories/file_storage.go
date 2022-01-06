@@ -123,7 +123,7 @@ func (r *FileURLRepository) Add(id string, url string) error {
 	_, err := r.reader.FindByKey(id)
 
 	if err != nil && err.Error() == "id is not found: "+id {
-		fmt.Println("new key, not found")
+		fmt.Printf("new key: '%s' for '%s'\n", id, url)
 		return r.writer.WriteRow(&Row{
 			key: id,
 			url: url,
