@@ -10,7 +10,7 @@ import (
 func TestDefaultValueForBaseURL(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := config.LoadEnvs()
+	cfg, err := config.LoadEnvs(&config.Config{})
 
 	require.NoError(t, err)
 	require.Equal(t, "http://localhost:8080", cfg.BaseURL)
@@ -19,7 +19,7 @@ func TestDefaultValueForBaseURL(t *testing.T) {
 func TestDefaultValueForServerAddress(t *testing.T) {
 	t.Parallel()
 
-	cfg, err := config.LoadEnvs()
+	cfg, err := config.LoadEnvs(&config.Config{})
 
 	require.NoError(t, err)
 	require.Equal(t, "localhost:8080", cfg.ServerAddress)
@@ -28,7 +28,7 @@ func TestDefaultValueForServerAddress(t *testing.T) {
 func TestSetValueForBaseURL(t *testing.T) {
 	t.Setenv("BASE_URL", "test://base/url")
 
-	cfg, err := config.LoadEnvs()
+	cfg, err := config.LoadEnvs(&config.Config{})
 
 	require.NoError(t, err)
 	require.Equal(t, "test://base/url", cfg.BaseURL)
@@ -37,7 +37,7 @@ func TestSetValueForBaseURL(t *testing.T) {
 func TestSetValueForServerAddress(t *testing.T) {
 	t.Setenv("SERVER_ADDRESS", "HOST:PORT")
 
-	cfg, err := config.LoadEnvs()
+	cfg, err := config.LoadEnvs(&config.Config{})
 
 	require.NoError(t, err)
 	require.Equal(t, "HOST:PORT", cfg.ServerAddress)
@@ -46,7 +46,7 @@ func TestSetValueForServerAddress(t *testing.T) {
 func TestSetValueForFileStoragePath(t *testing.T) {
 	t.Setenv("FILE_STORAGE_PATH", "/path/to/file")
 
-	cfg, err := config.LoadEnvs()
+	cfg, err := config.LoadEnvs(&config.Config{})
 
 	require.NoError(t, err)
 	require.Equal(t, "/path/to/file", cfg.FileStoragePath)
