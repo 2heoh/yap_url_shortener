@@ -9,14 +9,6 @@ import (
 	"strings"
 )
 
-type NotFoundError struct {
-	key string
-}
-
-func (e *NotFoundError) Error() string {
-	return fmt.Sprintf("id is not found: %s", e.key)
-}
-
 type Row struct {
 	key string
 	url string
@@ -27,7 +19,7 @@ type FileURLRepository struct {
 	file *os.File
 }
 
-func NewFileURLRepository(filename string) *FileURLRepository {
+func NewFileURLRepository(filename string) Repository {
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("Producer error : %s", err)
@@ -74,7 +66,7 @@ func (repo *FileURLRepository) findRowByKey(key string) (*Row, error) {
 		line, err := repo.io.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
-				return nil, &NotFoundError{key: key}
+				return nil, fmt.Errorf("id is not found: %s", key)
 			}
 			return nil, err
 		}

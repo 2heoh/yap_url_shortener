@@ -33,12 +33,6 @@ func (tg *TestableService) RetrieveURL(id string) (string, error) {
 	return "https://example.com/", nil
 }
 
-//type errReader int
-//
-//func (errReader) Read(p []byte) (n int, err error) {
-//	return 0, errors.New("test error")
-//}
-
 type expected struct {
 	code        int
 	response    string
@@ -136,19 +130,6 @@ func TestRequestHandler(t *testing.T) {
 				contentType: "application/json",
 			},
 		},
-		//{
-		//	name: "post request /api/shorten with empty body returns 400",
-		//	request: request{
-		//		method: http.MethodPost,
-		//		path:   "/api/shorten",
-		//		body:   errReader(0),
-		//	},
-		//	expected: expected{
-		//		code:        400,
-		//		response:    `{"error":"bad json:`,
-		//		contentType: "application/json",
-		//	},
-		//},
 		{
 			name: "post request /api/shorten with json body returns json with shorten url",
 			request: request{
