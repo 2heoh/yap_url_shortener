@@ -14,17 +14,20 @@ import (
 
 type Handler struct {
 	*chi.Mux
-	urls services.Shorter
+	urls    services.Shorter
+	baseURL string
 }
 
-func NewHandler(service services.Shorter) *Handler {
+func NewHandler(service services.Shorter, baseURL string) *Handler {
 	h := &Handler{
-		Mux:  chi.NewMux(),
-		urls: service,
+		Mux:     chi.NewMux(),
+		urls:    service,
+		baseURL: baseURL,
 	}
 
 	h.Use(middleware.Logger)
 	h.Post("/", h.PostURL)
+	h.Post("/api/shorten", h.PostJSONURL)
 	h.Get("/{id}", h.GetURL)
 	h.Get("/", func(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, "empty id", http.StatusBadRequest)
@@ -62,7 +65,7 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(fmt.Sprintf("http://localhost:8080/%s", id)))
+	_, err = w.Write([]byte(fmt.Sprintf("%s/%s", h.baseURL, id)))
 
 	if err != nil {
 		log.Printf("Error: %v", err)

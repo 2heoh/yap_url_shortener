@@ -4,16 +4,31 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/handlers"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 )
 
 func main() {
+	cfg, err := config.LoadArgs()
+	if err != nil {
+		log.Fatalf("Error parsing args: %v", err)
+	}
+
+	cfg, err = config.LoadEnvs(cfg)
+	if err != nil {
+		log.Fatalf("Error reading envs: %v", err)
+	}
+
+	log.Printf("Starting server at: http://%s/", cfg.ServerAddress)
+
 	log.Fatal(
-		http.ListenAndServe(":8080",
+		http.ListenAndServe(
+			cfg.ServerAddress,
 			handlers.NewHandler(
-				services.NewShorterURL(repositories.NewURLRepository()),
+				services.NewShorterURL(repositories.Init(cfg)),
+				cfg.BaseURL,
 			),
 		),
 	)

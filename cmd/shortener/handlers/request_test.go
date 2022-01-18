@@ -2,8 +2,6 @@ package handlers_test
 
 import (
 	"errors"
-	"github.com/2heoh/yap_url_shortener/cmd/shortener/handlers"
-	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/handlers"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,20 +33,20 @@ func (tg *TestableService) RetrieveURL(id string) (string, error) {
 	return "https://example.com/", nil
 }
 
+type expected struct {
+	code        int
+	response    string
+	contentType string
+}
+
+type request struct {
+	method string
+	path   string
+	body   io.Reader
+}
+
 func TestRequestHandler(t *testing.T) {
 	t.Parallel()
-
-	type expected struct {
-		code        int
-		response    string
-		contentType string
-	}
-
-	type request struct {
-		method string
-		path   string
-		body   io.Reader
-	}
 
 	tests := []struct {
 		name     string
@@ -74,17 +74,9 @@ func TestRequestHandler(t *testing.T) {
 				body:   nil,
 			},
 			expected: expected{
-				// когда text/html charset почему-то капсом
 				contentType: "text/html; charset=UTF-8",
 				code:        200,
 			},
-			// chi каким-то магическим способом сразу умадряется отдавать страницу
-			// что тут проверять не очень понятно
-			//expected: expected{
-			//	code:        307,
-			//	response:    "<a href=\"https://example.com/\">Temporary Redirect</a>.",
-			//
-			//},
 		},
 		{
 			name: "get request with not-existing id",
@@ -121,8 +113,47 @@ func TestRequestHandler(t *testing.T) {
 			},
 			expected: expected{
 				code:        201,
-				response:    "http://localhost:8080/test_url",
+				response:    "http://test/test_url",
 				contentType: "text/html; charset=utf-8",
+			},
+		},
+		{
+			name: "post request /api/shorten with broken json body returns 400",
+			request: request{
+				method: http.MethodPost,
+				path:   "/api/shorten",
+				body:   strings.NewReader(""),
+			},
+			expected: expected{
+				code:        400,
+				response:    `{"error":"bad json:`,
+				contentType: "application/json",
+			},
+		},
+		{
+			name: "post request /api/shorten with json body returns json with shorten url",
+			request: request{
+				method: http.MethodPost,
+				path:   "/api/shorten",
+				body:   strings.NewReader(`{"url": "https://google.com/"}`),
+			},
+			expected: expected{
+				code:        201,
+				response:    `{"result":"http://test/test_url"}`,
+				contentType: "application/json",
+			},
+		},
+		{
+			name: "post request /api/shorten with json with empty url returns 400",
+			request: request{
+				method: http.MethodPost,
+				path:   "/api/shorten",
+				body:   strings.NewReader(`{"url": ""}`),
+			},
+			expected: expected{
+				code:        400,
+				response:    `{"error":"missed url"}`,
+				contentType: "application/json",
 			},
 		},
 		{
@@ -138,18 +169,16 @@ func TestRequestHandler(t *testing.T) {
 		},
 	}
 	testURLService := &TestableService{}
-
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			r := handlers.NewHandler(testURLService)
+			r := handlers.NewHandler(testURLService, "http://test")
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 			req, err := http.NewRequest(tt.request.method, ts.URL+tt.request.path, tt.request.body)
 			require.NoError(t, err)
-
 			res, err := http.DefaultClient.Do(req)
-			require.NoError(t, err)
+			assert.NoError(t, err)
 			body, err := ioutil.ReadAll(res.Body)
 			defer func() {
 				err := res.Body.Close()
@@ -162,7 +191,7 @@ func TestRequestHandler(t *testing.T) {
 			assert.Equal(t, tt.expected.code, res.StatusCode)
 			assert.Equal(t, tt.expected.contentType, res.Header.Get("Content-Type"))
 			if tt.expected.response != "" {
-				assert.Equal(t, tt.expected.response, string(body))
+				assert.Contains(t, string(body), tt.expected.response)
 			}
 		})
 	}

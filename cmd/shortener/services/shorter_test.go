@@ -9,7 +9,9 @@ import (
 
 type TestableRepo struct{}
 
-func (tr *TestableRepo) Add(url, id string) {}
+func (tr *TestableRepo) Add(url, id string) error {
+	return nil
+}
 func (tr *TestableRepo) Get(id string) (string, error) {
 	if id == "non-existing" {
 		return "", errors.New("id is not found: " + id)
