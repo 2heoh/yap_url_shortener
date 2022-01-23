@@ -16,7 +16,6 @@ type gzipWriter struct {
 }
 
 func (w gzipWriter) Write(b []byte) (int, error) {
-	// w.Writer будет отвечать за gzip-сжатие, поэтому пишем в него
 	log.Printf("GZIP BODY: %s", string(b))
 	return w.Writer.Write(b)
 }
@@ -27,15 +26,14 @@ func Zipper(next http.Handler) http.Handler {
 		log.Printf("Accept-Encoding: %v", r.Header.Get("Accept-Encoding"))
 		log.Printf("Content-Encoding: %v", r.Header.Get("Content-Encoding"))
 
-		// проверяем, что клиент поддерживает gzip-сжатие
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-			// если gzip не поддерживается, передаём управление
-			// дальше без изменений
 			next.ServeHTTP(w, r)
 			return
 		}
 
-		// создаём gzip.Writer поверх текущего w
+		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+			log.Printf("Need to parse gzip body: %v", r.Body)
+		}
 		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 		if err != nil {
 			io.WriteString(w, err.Error())
@@ -44,7 +42,7 @@ func Zipper(next http.Handler) http.Handler {
 		defer gz.Close()
 
 		w.Header().Set("Content-Encoding", "gzip")
-		// передаём обработчику страницы переменную типа gzipWriter для вывода данных
+
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 	})
 }
