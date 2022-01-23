@@ -32,9 +32,23 @@ func Zipper(next http.Handler) http.Handler {
 			return
 		}
 
-		//if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
-		//	log.Printf("Need to parse gzip body: %v", r.Body)
-		//}
+		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+			gz, err := gzip.NewReader(r.Body)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			// не забывайте потом закрыть *gzip.Reader
+			defer gz.Close()
+
+			// при чтении вернётся распакованный слайс байт
+			body, err := io.ReadAll(gz)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			log.Printf("* Decoded body: %v", body)
+		}
 
 		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
 		w.Header().Set("Content-Encoding", "gzip")
