@@ -17,6 +17,7 @@ type gzipWriter struct {
 
 func (w gzipWriter) Write(b []byte) (int, error) {
 	// w.Writer будет отвечать за gzip-сжатие, поэтому пишем в него
+	log.Printf("GZIP BODY: %s", string(b))
 	return w.Writer.Write(b)
 }
 
