@@ -17,6 +17,7 @@ type gzipWriter struct {
 
 func (w gzipWriter) Write(b []byte) (int, error) {
 	log.Printf("GZIP BODY: %s", string(b))
+
 	return w.Writer.Write(b)
 }
 
@@ -31,13 +32,13 @@ func Zipper(next http.Handler) http.Handler {
 			return
 		}
 
-		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
-			log.Printf("Need to parse gzip body: %v", r.Body)
-		}
+		//if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+		//	log.Printf("Need to parse gzip body: %v", r.Body)
+		//}
 
-		w.Header().Set("Content-Encoding", "gzip")
 		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
-		if err == nil {
+		w.Header().Set("Content-Encoding", "gzip")
+		if err != nil {
 			log.Printf("Error: %v", err)
 		}
 

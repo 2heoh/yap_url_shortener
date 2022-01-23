@@ -26,6 +26,8 @@ func NewHandler(service services.Shorter, baseURL string) *Handler {
 	}
 
 	h.Use(DebugRequest)
+	h.Use(middleware.Logger)
+	h.Use(Zipper)
 
 	h.Post("/", h.PostURL)
 	h.Post("/api/shorten", h.PostJSONURL)
@@ -33,8 +35,7 @@ func NewHandler(service services.Shorter, baseURL string) *Handler {
 	h.Get("/", func(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, "empty id", http.StatusBadRequest)
 	})
-	h.Use(middleware.Logger)
-	h.Use(Zipper)
+
 	return h
 }
 

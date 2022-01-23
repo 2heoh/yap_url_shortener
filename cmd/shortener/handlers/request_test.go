@@ -176,7 +176,7 @@ func TestRequestHandler(t *testing.T) {
 		//		body:   strings.NewReader("https://google.com/"),
 		//		headers: map[string]string{
 		//			"Content-Encoding": "gzip",
-		//			//"Accept-Encoding":  "gzip",
+		//			"Accept-Encoding":  "gzip",
 		//		},
 		//	},
 		//	expected: expected{
@@ -195,9 +195,9 @@ func TestRequestHandler(t *testing.T) {
 			defer ts.Close()
 			req, err := http.NewRequest(tt.request.method, ts.URL+tt.request.path, tt.request.body)
 
-			for _, key := range tt.request.headers {
-				req.Header.Set(key, tt.request.headers[key])
-			}
+			//for _, key := range tt.request.headers {
+			//	req.Header.Set(key, tt.request.headers[key])
+			//}
 
 			require.NoError(t, err)
 			res, err := http.DefaultClient.Do(req)
