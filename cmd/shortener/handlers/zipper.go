@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"bytes"
 	"compress/gzip"
 	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -19,6 +22,7 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 
 func Zipper(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 		// проверяем, что клиент поддерживает gzip-сжатие
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			// если gzip не поддерживается, передаём управление
@@ -38,5 +42,23 @@ func Zipper(next http.Handler) http.Handler {
 		w.Header().Set("Content-Encoding", "gzip")
 		// передаём обработчику страницы переменную типа gzipWriter для вывода данных
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
+	})
+}
+
+func DebugRequest(next http.Handler) http.Handler {
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		buf, bodyErr := ioutil.ReadAll(r.Body)
+		if bodyErr != nil {
+			log.Print("bodyErr ", bodyErr.Error())
+			http.Error(w, bodyErr.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		rdr1 := ioutil.NopCloser(bytes.NewBuffer(buf))
+		rdr2 := ioutil.NopCloser(bytes.NewBuffer(buf))
+		log.Printf("\n= DEBUG ============\n%s %s\nAccept-Encoding: %s\nContent-Encoding: %s\n= BODY: ==============\n%v\n= END BODY: ==========", r.Method, r.URL, r.Header.Get("Accept-Encoding"), r.Header.Get("Content-Encoding"), rdr1)
+		r.Body = rdr2
+		next.ServeHTTP(w, r)
 	})
 }

@@ -24,6 +24,10 @@ jobs:
           fileName: statictest
           out-file-path: .tools
 
+      - name: Run existing test
+        run: |
+          go test ./...
+
       - name: Setup autotest binary
         run: |
           chmod -R +x $GITHUB_WORKSPACE/.tools/statictest
