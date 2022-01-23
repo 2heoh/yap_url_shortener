@@ -48,6 +48,7 @@ func Zipper(next http.Handler) http.Handler {
 				return
 			}
 			log.Printf("* Decoded body: %v", body)
+			r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
 		}
 
 		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
