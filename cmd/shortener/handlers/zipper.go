@@ -34,14 +34,14 @@ func Zipper(next http.Handler) http.Handler {
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
 			log.Printf("Need to parse gzip body: %v", r.Body)
 		}
-		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
-		if err != nil {
-			io.WriteString(w, err.Error())
-			return
-		}
-		defer gz.Close()
 
 		w.Header().Set("Content-Encoding", "gzip")
+		gz, err := gzip.NewWriterLevel(w, gzip.BestSpeed)
+		if err == nil {
+			log.Printf("Error: %v", err)
+		}
+
+		defer gz.Close()
 
 		next.ServeHTTP(gzipWriter{ResponseWriter: w, Writer: gz}, r)
 	})

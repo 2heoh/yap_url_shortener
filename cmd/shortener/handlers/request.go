@@ -3,13 +3,13 @@ package handlers
 import (
 	"errors"
 	"fmt"
+	"github.com/go-chi/chi/v5/middleware"
 	"io"
 	"log"
 	"net/http"
 
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 )
 
 type Handler struct {
@@ -26,8 +26,6 @@ func NewHandler(service services.Shorter, baseURL string) *Handler {
 	}
 
 	h.Use(DebugRequest)
-	h.Use(middleware.Logger)
-	h.Use(Zipper)
 
 	h.Post("/", h.PostURL)
 	h.Post("/api/shorten", h.PostJSONURL)
@@ -35,7 +33,8 @@ func NewHandler(service services.Shorter, baseURL string) *Handler {
 	h.Get("/", func(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, "empty id", http.StatusBadRequest)
 	})
-
+	h.Use(middleware.Logger)
+	h.Use(Zipper)
 	return h
 }
 
