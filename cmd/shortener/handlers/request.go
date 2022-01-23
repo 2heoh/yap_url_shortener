@@ -25,8 +25,9 @@ func NewHandler(service services.Shorter, baseURL string) *Handler {
 		baseURL: baseURL,
 	}
 
-	h.Use(DebugRequest)
+	//h.Use(DebugRequest)
 	h.Use(middleware.Logger)
+	h.Use(middleware.Compress(5))
 	//h.Use(Zipper)
 
 	h.Post("/", h.PostURL)

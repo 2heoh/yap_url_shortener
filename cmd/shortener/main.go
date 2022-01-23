@@ -26,10 +26,10 @@ func main() {
 	log.Fatal(
 		http.ListenAndServe(
 			cfg.ServerAddress,
-			handlers.Zipper(handlers.NewHandler(
+			handlers.NewHandler(
 				services.NewShorterURL(repositories.Init(cfg)),
 				cfg.BaseURL,
-			)),
+			),
 		),
 	)
 }

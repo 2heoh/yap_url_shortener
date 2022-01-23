@@ -40,9 +40,10 @@ type expected struct {
 }
 
 type request struct {
-	method string
-	path   string
-	body   io.Reader
+	method  string
+	path    string
+	body    io.Reader
+	headers map[string]string
 }
 
 func TestRequestHandler(t *testing.T) {
@@ -167,6 +168,23 @@ func TestRequestHandler(t *testing.T) {
 				code: 405,
 			},
 		},
+		{
+			name: "Content-Encoding: gzip",
+			request: request{
+				method: http.MethodPost,
+				path:   "/",
+				body:   strings.NewReader("https://google.com/"),
+				headers: map[string]string{
+					"Content-Encoding": "gzip",
+					//"Accept-Encoding":  "gzip",
+				},
+			},
+			expected: expected{
+				code:        201,
+				response:    "1",
+				contentType: "text/html; charset=utf-8",
+			},
+		},
 	}
 	testURLService := &TestableService{}
 	for _, tt := range tests {
@@ -176,6 +194,11 @@ func TestRequestHandler(t *testing.T) {
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 			req, err := http.NewRequest(tt.request.method, ts.URL+tt.request.path, tt.request.body)
+
+			for _, key := range tt.request.headers {
+				req.Header.Set(key, tt.request.headers[key])
+			}
+
 			require.NoError(t, err)
 			res, err := http.DefaultClient.Do(req)
 			assert.NoError(t, err)

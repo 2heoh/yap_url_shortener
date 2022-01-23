@@ -24,6 +24,9 @@ func (w gzipWriter) Write(b []byte) (int, error) {
 func Zipper(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
+		log.Printf("Accept-Encoding: %v", r.Header.Get("Accept-Encoding"))
+		log.Printf("Content-Encoding: %v", r.Header.Get("Content-Encoding"))
+
 		// проверяем, что клиент поддерживает gzip-сжатие
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
 			// если gzip не поддерживается, передаём управление
