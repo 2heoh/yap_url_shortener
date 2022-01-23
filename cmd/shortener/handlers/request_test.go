@@ -168,23 +168,23 @@ func TestRequestHandler(t *testing.T) {
 				code: 405,
 			},
 		},
-		{
-			name: "Content-Encoding: gzip",
-			request: request{
-				method: http.MethodPost,
-				path:   "/",
-				body:   strings.NewReader("https://google.com/"),
-				headers: map[string]string{
-					"Content-Encoding": "gzip",
-					//"Accept-Encoding":  "gzip",
-				},
-			},
-			expected: expected{
-				code:        201,
-				response:    "1",
-				contentType: "text/html; charset=utf-8",
-			},
-		},
+		//{
+		//	name: "Content-Encoding: gzip",
+		//	request: request{
+		//		method: http.MethodPost,
+		//		path:   "/",
+		//		body:   strings.NewReader("https://google.com/"),
+		//		headers: map[string]string{
+		//			"Content-Encoding": "gzip",
+		//			//"Accept-Encoding":  "gzip",
+		//		},
+		//	},
+		//	expected: expected{
+		//		code:        201,
+		//		response:    "1",
+		//		contentType: "text/html; charset=utf-8",
+		//	},
+		//},
 	}
 	testURLService := &TestableService{}
 	for _, tt := range tests {
