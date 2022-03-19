@@ -2,6 +2,7 @@ package services
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
@@ -68,6 +69,7 @@ func (s *ShorterURL) RetrieveURL(id string) (string, error) {
 }
 
 func (s *ShorterURL) RetrieveURLsForUser(id string) ([]repositories.LinkItem, error) {
+	fmt.Printf(" ** %v \n", id)
 	result := s.repository.GetAllBy(id)
 	return result, nil
 }

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -42,15 +43,15 @@ func NewHandler(service services.Shorter, baseURL string) *Handler {
 }
 
 func (h *Handler) GetURLSForUser(w http.ResponseWriter, r *http.Request) {
-	request := SignedRequest{r}
+	//request := SignedRequest{r}
 
-	id, err := request.GetUserID()
-	if err != nil {
-		log.Printf("Error: %v", err)
-	}
+	//id, err := request.GetUserID()
+	//if err != nil {
+	//	log.Printf("Error: %v", err)
+	//}
 
-	log.Printf(" UserID: %s ", id)
-	urls, err := h.urls.RetrieveURLsForUser(string(id))
+	log.Printf(" UserID: %s ", UserID)
+	urls, err := h.urls.RetrieveURLsForUser(UserID)
 	if err != nil {
 		log.Printf("can't get urls: %v", err)
 	}
@@ -60,15 +61,19 @@ func (h *Handler) GetURLSForUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for i, url := range urls {
+	result := []repositories.LinkItem{}
+	for _, url := range urls {
 		fmt.Printf(" * %v \n", url.ShortURL)
-		urls[i].ShortURL = h.baseURL + "/" + url.ShortURL
+		result = append(result, repositories.LinkItem{
+			OriginalURL: url.OriginalURL,
+			ShortURL:    h.baseURL + "/" + url.ShortURL,
+		})
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 
-	body, err := json.Marshal(urls)
+	body, err := json.Marshal(result)
 	if err != nil {
 		log.Printf("json serialization error: %v", err)
 	}

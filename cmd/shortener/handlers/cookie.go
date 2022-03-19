@@ -100,7 +100,7 @@ func SignedCookie(next http.Handler) http.Handler {
 		}
 
 		log.Printf("decrypted: %s", string(src2))
-
+		UserID = string(src2)
 		next.ServeHTTP(w, r)
 	})
 }

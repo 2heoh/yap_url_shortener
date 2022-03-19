@@ -2,11 +2,11 @@ package repositories
 
 import (
 	"errors"
+	"fmt"
 	"log"
 )
 
 type Repository interface {
-	//Add(id string, url string) error
 	Get(id string) (string, error)
 	AddBy(id string, url string, userID string) error
 	GetAllBy(userID string) []LinkItem
@@ -24,11 +24,13 @@ type InMemoryRepository struct {
 
 func (r *InMemoryRepository) GetAllBy(userID string) []LinkItem {
 
+	fmt.Printf(" ==%v \n", r.linksByUser[userID])
+
 	if links, found := r.linksByUser[userID]; found {
 		return links
 	}
 
-	return make([]LinkItem, 0)
+	return nil
 }
 
 var ErrNotFound = errors.New("id is not found")
