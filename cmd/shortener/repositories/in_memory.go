@@ -6,15 +6,15 @@ import (
 )
 
 type Repository interface {
-	Add(id string, url string) error
+	//Add(id string, url string) error
 	Get(id string) (string, error)
 	AddBy(id string, url string, userID string) error
 	GetAllBy(userID string) []LinkItem
 }
 
 type LinkItem struct {
-	ShortUrl    string `json:"short_url"`
-	OriginalUrl string `json:"original_url"`
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
 }
 
 type InMemoryRepository struct {
@@ -47,10 +47,11 @@ func (r *InMemoryRepository) AddBy(id string, url string, userID string) error {
 	return nil
 }
 
-func (r *InMemoryRepository) Add(id string, url string) error {
-	r.links[id] = url
-	return nil
-}
+//func (r *InMemoryRepository) Add(id string, url string) error {
+//	r.links[id] = url
+//	log.Printf(" // %s => %s ", url, id)
+//	return nil
+//}
 
 func (r *InMemoryRepository) Get(id string) (string, error) {
 	if url, found := r.links[id]; found {

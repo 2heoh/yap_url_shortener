@@ -18,7 +18,7 @@ func TestFileStorageNonEmptyStorageWriteAndReadOneURL(t *testing.T) {
 
 	repository := repositories.NewFileURLRepository("./test.db")
 
-	err := repository.Add("1;test", "https://example.com")
+	err := repository.AddBy("test", "https://example.com", "1")
 	require.NoError(t, err)
 
 	url, err := repository.Get("test")
@@ -38,7 +38,7 @@ func TestFileStorageEmptyStorageWriteAndReadTwoURLs(t *testing.T) {
 
 	repository := repositories.NewFileURLRepository("./test.db")
 
-	err := repository.Add("1;test", "https://example.com")
+	err := repository.AddBy("test", "https://example.com", "1")
 	require.NoError(t, err)
 
 	url, err := repository.Get("test")
@@ -46,7 +46,7 @@ func TestFileStorageEmptyStorageWriteAndReadTwoURLs(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "https://example.com", url)
 
-	err = repository.Add("2;test2", "https://example2.com")
+	err = repository.AddBy("test2", "https://example2.com", "2")
 	require.NoError(t, err)
 
 	url, err = repository.Get("test2")
@@ -87,7 +87,7 @@ func TestFileStorageReadAllIDs(t *testing.T) {
 	urls := repository.GetAllBy("a")
 
 	require.Equal(t, len(urls), 1)
-	require.Equal(t, urls[0].OriginalUrl, "c")
+	require.Equal(t, urls[0].OriginalURL, "c")
 
 	//url, err = repository.Get("t")
 	//

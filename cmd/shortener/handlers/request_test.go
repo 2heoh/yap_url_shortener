@@ -31,7 +31,7 @@ func (tg *TestableService) RetrieveURLsForUser(id string) ([]repositories.LinkIt
 		return nil, errors.New("id is not found: " + id)
 	}
 
-	url := repositories.LinkItem{ShortUrl: "test", OriginalUrl: "https://example.com/"}
+	url := repositories.LinkItem{ShortURL: "test", OriginalURL: "https://example.com/"}
 
 	result := []repositories.LinkItem{url}
 

@@ -52,6 +52,14 @@ func (h *Handler) GetURLSForUser(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf(" UserID: %s ", id)
 	urls, err := h.urls.RetrieveURLsForUser(string(id))
+	if err != nil {
+		log.Printf("can't get urls: %v", err)
+	}
+
+	for i, url := range urls {
+		fmt.Printf(" * %v \n", url.ShortURL)
+		urls[i].ShortURL = h.baseURL + "/" + url.ShortURL
+	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
@@ -85,8 +93,12 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-
-	id, err := h.urls.CreateURL(string(b))
+	srequest := SignedRequest{r}
+	userID, err := srequest.GetUserID()
+	if err != nil {
+		log.Printf("Error: %v", err)
+	}
+	id, err := h.urls.CreateURLForUser(string(b), string(userID))
 
 	if errors.Is(err, services.ErrEmptyURL) {
 		http.Error(w, "missed url", http.StatusBadRequest)

@@ -11,8 +11,7 @@ import (
 type TestableRepo struct{}
 
 func (tr *TestableRepo) AddBy(id string, url string, userID string) error {
-	//TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (tr *TestableRepo) GetAllBy(userID string) []repositories.LinkItem {
@@ -40,7 +39,7 @@ func TestShorterURLCreation(t *testing.T) {
 
 	service := services.NewShorterURL(&TestableRepo{})
 
-	id, err := service.CreateURL("https://example.com")
+	id, err := service.CreateURLForUser("https://example.com", "1")
 
 	require.NoError(t, err)
 	require.Equal(t, "96248650", id)
@@ -51,7 +50,7 @@ func TestShorterURLCreationWhenURLIsEmpty(t *testing.T) {
 
 	service := services.NewShorterURL(&TestableRepo{})
 
-	id, err := service.CreateURL(string([]byte{}))
+	id, err := service.CreateURLForUser(string([]byte{}), "1")
 
 	t.Logf(id, err)
 	require.Equal(t, services.ErrEmptyURL, err)

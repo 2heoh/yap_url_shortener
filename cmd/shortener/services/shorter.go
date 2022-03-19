@@ -2,12 +2,13 @@ package services
 
 import (
 	"errors"
+	"log"
 
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 )
 
 type Shorter interface {
-	CreateURL(url string) (string, error)
+	//CreateURL(url string) (string, error)
 	CreateURLForUser(url string, userID string) (string, error)
 	RetrieveURL(id string) (string, error)
 	RetrieveURLsForUser(id string) ([]repositories.LinkItem, error)
@@ -27,17 +28,17 @@ func NewShorterURL(repo repositories.Repository) *ShorterURL {
 	return &ShorterURL{repo}
 }
 
-func (s *ShorterURL) CreateURL(url string) (string, error) {
-	if url == "" {
-		return "", ErrEmptyURL
-	}
-
-	id := GenerateID(url)
-
-	s.repository.Add(id, url)
-
-	return id, nil
-}
+//func (s *ShorterURL) CreateURL(url string) (string, error) {
+//	if url == "" {
+//		return "", ErrEmptyURL
+//	}
+//
+//	id := GenerateID(url)
+//
+//	s.repository.Add(id, url)
+//
+//	return id, nil
+//}
 
 func (s *ShorterURL) CreateURLForUser(url string, userID string) (string, error) {
 	if url == "" {
@@ -45,6 +46,8 @@ func (s *ShorterURL) CreateURLForUser(url string, userID string) (string, error)
 	}
 
 	id := GenerateID(url)
+
+	log.Printf("userID: %v", userID)
 
 	s.repository.AddBy(id, url, userID)
 

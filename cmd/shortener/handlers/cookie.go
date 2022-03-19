@@ -1,31 +1,36 @@
 package handlers
 
 import (
-	"crypto/rand"
 	"encoding/hex"
 	"log"
+	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 )
 
-func generateRandom(size int) ([]byte, error) {
-	b := make([]byte, size)
-	if _, err := rand.Read(b); err != nil {
-		return nil, err
-	}
+const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-	return b, nil
+func RandStringBytes(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
 }
 
 type SignedRequest struct {
 	*http.Request
-	//UserID string
 }
 
 func (r *SignedRequest) GetUserID() ([]byte, error) {
 	crypto, err := services.NewCrypto()
+	if err != nil {
+		log.Printf("can't init crypto: %v", err)
+		return nil, err
+	}
+
 	session, err := r.Cookie("session")
 	if err != nil {
 		log.Printf("can't find cookie 'session': %v", err)
@@ -55,7 +60,7 @@ func SignedCookie(next http.Handler) http.Handler {
 		if err != nil {
 			log.Printf("Cant find cookie - set new")
 
-			userID, _ := generateRandom(16)
+			userID := RandStringBytes(16)
 
 			cookie := &http.Cookie{
 				Name:    "session",
@@ -63,9 +68,9 @@ func SignedCookie(next http.Handler) http.Handler {
 				Expires: time.Now().AddDate(1, 0, 0),
 			}
 
-			seal := crypto.Encrypt(userID)
+			seal := crypto.Encrypt([]byte(userID))
 
-			log.Printf(" >> %v", seal)
+			log.Printf("%v >> %v", userID, seal)
 
 			cookie.Value = hex.EncodeToString(seal) // зашифровываем
 

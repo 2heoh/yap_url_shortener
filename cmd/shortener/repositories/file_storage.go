@@ -20,18 +20,19 @@ type FileURLRepository struct {
 	file *os.File
 }
 
-func (repo *FileURLRepository) AddBy(id string, url string, userID string) error {
+func (repo *FileURLRepository) AddBy(key string, url string, userID string) error {
 	items, _ := repo.findRowBy(userID)
 
 	for _, item := range items {
-		if item.ShortUrl == id {
+		if item.ShortURL == key {
 			return nil
 		}
 	}
-	fmt.Printf("new key: '%s' for '%s'\n", id, url)
+	fmt.Printf("new key: '%s' for '%s'\n", key, url)
 	return repo.writeRow(&Row{
-		key: id,
-		url: url,
+		key:    key,
+		url:    url,
+		userID: userID,
 	})
 }
 
@@ -130,14 +131,14 @@ func (repo *FileURLRepository) findRowBy(userID string) ([]LinkItem, error) {
 			row := splitLine(strings.TrimSpace(line))
 
 			if userID == row.userID {
-				items = append(items, LinkItem{ShortUrl: row.key, OriginalUrl: row.url})
+				items = append(items, LinkItem{ShortURL: row.key, OriginalURL: row.url})
 			}
 		}
 	}
 }
 
 func (repo *FileURLRepository) writeRow(r *Row) error {
-	line := fmt.Sprintf("%s;%s\n", r.key, r.url)
+	line := fmt.Sprintf("%s;%s;%s\n", r.userID, r.key, r.url)
 
 	_, err := repo.io.WriteString(line)
 	if err != nil {
