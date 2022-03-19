@@ -42,7 +42,6 @@ func NewHandler(service services.Shorter, baseURL string) *Handler {
 }
 
 func (h *Handler) GetURLSForUser(w http.ResponseWriter, r *http.Request) {
-
 	request := SignedRequest{r}
 
 	id, err := request.GetUserID()
@@ -54,6 +53,11 @@ func (h *Handler) GetURLSForUser(w http.ResponseWriter, r *http.Request) {
 	urls, err := h.urls.RetrieveURLsForUser(string(id))
 	if err != nil {
 		log.Printf("can't get urls: %v", err)
+	}
+
+	if len(urls) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
 	}
 
 	for i, url := range urls {

@@ -20,6 +20,8 @@ func RandStringBytes(n int) string {
 	return string(b)
 }
 
+var UserID string
+
 type SignedRequest struct {
 	*http.Request
 }
@@ -60,7 +62,7 @@ func SignedCookie(next http.Handler) http.Handler {
 		if err != nil {
 			log.Printf("Cant find cookie - set new")
 
-			userID := RandStringBytes(16)
+			UserID = RandStringBytes(16)
 
 			cookie := &http.Cookie{
 				Name:    "session",
@@ -68,9 +70,9 @@ func SignedCookie(next http.Handler) http.Handler {
 				Expires: time.Now().AddDate(1, 0, 0),
 			}
 
-			seal := crypto.Encrypt([]byte(userID))
+			seal := crypto.Encrypt([]byte(UserID))
 
-			log.Printf("%v >> %v", userID, seal)
+			log.Printf("%v >> %v", UserID, seal)
 
 			cookie.Value = hex.EncodeToString(seal) // зашифровываем
 

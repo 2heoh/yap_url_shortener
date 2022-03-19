@@ -35,14 +35,9 @@ func (h *Handler) PostJSONURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	srequest := SignedRequest{r}
+	fmt.Printf("USER ID: %v", UserID)
 
-	userID, err := srequest.GetUserID()
-	if err != nil {
-		log.Printf("Error: %v", err)
-	}
-
-	id, err := h.urls.CreateURLForUser(request.URL, string(userID))
+	id, err := h.urls.CreateURLForUser(request.URL, string(UserID))
 
 	if errors.Is(err, services.ErrEmptyURL) {
 		h.ReturnJSONError(w, "missed url")
