@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"errors"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -16,6 +17,27 @@ import (
 )
 
 type TestableService struct{}
+
+func (tg *TestableService) CreateURLForUser(url string, userID string) (string, error) {
+	if url == "" {
+		return "", services.ErrEmptyURL
+	}
+
+	return "test_url", nil
+}
+
+func (tg *TestableService) RetrieveURLsForUser(id string) ([]repositories.LinkItem, error) {
+	if id == "non-existing" {
+		return nil, errors.New("id is not found: " + id)
+	}
+
+	url := repositories.LinkItem{ShortUrl: "test", OriginalUrl: "https://example.com/"}
+
+	result := []repositories.LinkItem{url}
+
+	return result, nil
+
+}
 
 func (tg *TestableService) CreateURL(url string) (string, error) {
 	if url == "" {

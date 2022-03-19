@@ -8,7 +8,9 @@ import (
 
 type Shorter interface {
 	CreateURL(url string) (string, error)
+	CreateURLForUser(url string, userID string) (string, error)
 	RetrieveURL(id string) (string, error)
+	RetrieveURLsForUser(id string) ([]repositories.LinkItem, error)
 }
 
 var (
@@ -37,6 +39,18 @@ func (s *ShorterURL) CreateURL(url string) (string, error) {
 	return id, nil
 }
 
+func (s *ShorterURL) CreateURLForUser(url string, userID string) (string, error) {
+	if url == "" {
+		return "", ErrEmptyURL
+	}
+
+	id := GenerateID(url)
+
+	s.repository.AddBy(id, url, userID)
+
+	return id, nil
+}
+
 func (s *ShorterURL) RetrieveURL(id string) (string, error) {
 	if id == "" {
 		return "", ErrEmptyID
@@ -48,4 +62,9 @@ func (s *ShorterURL) RetrieveURL(id string) (string, error) {
 	}
 
 	return url, nil
+}
+
+func (s *ShorterURL) RetrieveURLsForUser(id string) ([]repositories.LinkItem, error) {
+	result := s.repository.GetAllBy(id)
+	return result, nil
 }

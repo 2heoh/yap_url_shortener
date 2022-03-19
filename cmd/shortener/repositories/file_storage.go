@@ -19,6 +19,16 @@ type FileURLRepository struct {
 	file *os.File
 }
 
+func (repo *FileURLRepository) AddBy(id string, url string, userID string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (repo *FileURLRepository) GetAllBy(userID string) []LinkItem {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewFileURLRepository(filename string) Repository {
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {

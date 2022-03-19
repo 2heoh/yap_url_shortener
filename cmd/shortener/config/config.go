@@ -33,6 +33,7 @@ func (na *NetAddress) Set(flagValue string) error {
 	parts := strings.Split(flagValue, ":")
 	na.Host = parts[0]
 	port, err := strconv.Atoi(parts[1])
+
 	if err != nil {
 		return err
 	}

@@ -1,15 +1,16 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-chi/chi/v5/middleware"
 	"io"
 	"log"
 	"net/http"
 
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 )
 
 type Handler struct {
@@ -25,18 +26,45 @@ func NewHandler(service services.Shorter, baseURL string) *Handler {
 		baseURL: baseURL,
 	}
 
-	h.Use(DebugRequest)
 	h.Use(middleware.Logger)
+	h.Use(SignedCookie)
 	h.Use(Zipper)
 
 	h.Post("/", h.PostURL)
 	h.Post("/api/shorten", h.PostJSONURL)
 	h.Get("/{id}", h.GetURL)
+	h.Get("/api/user/urls", h.GetURLSForUser)
 	h.Get("/", func(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, "empty id", http.StatusBadRequest)
 	})
 
 	return h
+}
+
+func (h *Handler) GetURLSForUser(w http.ResponseWriter, r *http.Request) {
+
+	request := SignedRequest{r}
+
+	id, err := request.GetUserID()
+	if err != nil {
+		log.Printf("Error: %v", err)
+	}
+
+	log.Printf(" UserID: %s ", id)
+	urls, err := h.urls.RetrieveURLsForUser(string(id))
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+
+	body, err := json.Marshal(urls)
+	if err != nil {
+		log.Printf("json serialization error: %v", err)
+	}
+
+	_, err = w.Write(body)
+	if err != nil {
+		log.Printf("Error: %v", err)
+	}
 }
 
 func (h *Handler) GetURL(w http.ResponseWriter, r *http.Request) {
@@ -69,7 +97,6 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
 	_, err = w.Write([]byte(fmt.Sprintf("%s/%s", h.baseURL, id)))
-
 	if err != nil {
 		log.Printf("Error: %v", err)
 	}
