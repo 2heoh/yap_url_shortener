@@ -102,12 +102,7 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	srequest := SignedRequest{r}
-	userID, err := srequest.GetUserID()
-	if err != nil {
-		log.Printf("Error: %v", err)
-	}
-	id, err := h.urls.CreateURLForUser(string(b), string(userID))
+	id, err := h.urls.CreateURLForUser(string(b), UserID)
 
 	if errors.Is(err, services.ErrEmptyURL) {
 		http.Error(w, "missed url", http.StatusBadRequest)
