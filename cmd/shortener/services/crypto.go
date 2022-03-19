@@ -32,7 +32,7 @@ func NewCrypto() (*crypto, error) {
 	if err != nil {
 		return nil, err
 	}
-	var aesgcm, _ = cipher.NewGCM(aesblock)
+	aesgcm, err := cipher.NewGCM(aesblock)
 	if err != nil {
 		return nil, err
 	}

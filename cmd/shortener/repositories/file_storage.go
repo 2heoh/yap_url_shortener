@@ -10,8 +10,9 @@ import (
 )
 
 type Row struct {
-	key string
-	url string
+	key    string
+	url    string
+	userID string
 }
 
 type FileURLRepository struct {
@@ -20,13 +21,27 @@ type FileURLRepository struct {
 }
 
 func (repo *FileURLRepository) AddBy(id string, url string, userID string) error {
-	//TODO implement me
-	panic("implement me")
+	items, _ := repo.findRowBy(userID)
+
+	for _, item := range items {
+		if item.ShortUrl == id {
+			return nil
+		}
+	}
+	fmt.Printf("new key: '%s' for '%s'\n", id, url)
+	return repo.writeRow(&Row{
+		key: id,
+		url: url,
+	})
 }
 
 func (repo *FileURLRepository) GetAllBy(userID string) []LinkItem {
-	//TODO implement me
-	panic("implement me")
+	rows, err := repo.findRowBy(userID)
+	if err != nil {
+		return nil
+	}
+
+	return rows
 }
 
 func NewFileURLRepository(filename string) Repository {
@@ -74,6 +89,7 @@ func (repo *FileURLRepository) findRowByKey(key string) (*Row, error) {
 
 	for {
 		line, err := repo.io.ReadString('\n')
+		log.Printf("line: %s", line)
 		if err != nil {
 			if err == io.EOF {
 				return nil, fmt.Errorf("id is not found: %s", key)
@@ -86,6 +102,35 @@ func (repo *FileURLRepository) findRowByKey(key string) (*Row, error) {
 
 			if key == row.key {
 				return row, nil
+			}
+		}
+	}
+}
+
+func (repo *FileURLRepository) findRowBy(userID string) ([]LinkItem, error) {
+	_, err := repo.file.Seek(0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var items []LinkItem
+
+	for {
+		line, err := repo.io.ReadString('\n')
+		log.Printf("line: %s", line)
+		if err != nil {
+			if err == io.EOF {
+				return items, nil
+				//return nil, fmt.Errorf("userID is not found: %s", userID)
+			}
+			return nil, err
+		}
+
+		if line != "" {
+			row := splitLine(strings.TrimSpace(line))
+
+			if userID == row.userID {
+				items = append(items, LinkItem{ShortUrl: row.key, OriginalUrl: row.url})
 			}
 		}
 	}
@@ -106,7 +151,8 @@ func splitLine(line string) *Row {
 	parts := strings.Split(line, ";")
 
 	return &Row{
-		parts[0],
-		parts[1],
+		userID: parts[0],
+		key:    parts[1],
+		url:    parts[2],
 	}
 }
