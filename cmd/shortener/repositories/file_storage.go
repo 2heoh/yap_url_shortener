@@ -20,7 +20,7 @@ type FileURLRepository struct {
 	file *os.File
 }
 
-func (repo *FileURLRepository) AddBy(key string, url string, userID string) error {
+func (repo *FileURLRepository) Add(key string, url string, userID string) error {
 	items, _ := repo.findRowBy(userID)
 
 	for _, item := range items {
@@ -28,7 +28,9 @@ func (repo *FileURLRepository) AddBy(key string, url string, userID string) erro
 			return nil
 		}
 	}
+
 	fmt.Printf("new key: '%s' for '%s'\n", key, url)
+
 	return repo.writeRow(&Row{
 		key:    key,
 		url:    url,
@@ -36,7 +38,7 @@ func (repo *FileURLRepository) AddBy(key string, url string, userID string) erro
 	})
 }
 
-func (repo *FileURLRepository) GetAllBy(userID string) []LinkItem {
+func (repo *FileURLRepository) GetAllFor(userID string) []LinkItem {
 	rows, err := repo.findRowBy(userID)
 	if err != nil {
 		return nil
@@ -46,7 +48,9 @@ func (repo *FileURLRepository) GetAllBy(userID string) []LinkItem {
 }
 
 func NewFileURLRepository(filename string) Repository {
+
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
 	if err != nil {
 		log.Fatalf("Producer error : %s", err)
 		return nil
@@ -56,21 +60,6 @@ func NewFileURLRepository(filename string) Repository {
 		file: file,
 		io:   bufio.NewReadWriter(bufio.NewReader(file), bufio.NewWriter(file)),
 	}
-}
-
-func (repo *FileURLRepository) Add(id string, url string) error {
-
-	_, err := repo.findRowByKey(id)
-
-	if err != nil && err.Error() == "id is not found: "+id {
-		fmt.Printf("new key: '%s' for '%s'\n", id, url)
-		return repo.writeRow(&Row{
-			key: id,
-			url: url,
-		})
-	}
-
-	return nil
 }
 
 func (repo *FileURLRepository) Get(key string) (string, error) {
@@ -90,7 +79,7 @@ func (repo *FileURLRepository) findRowByKey(key string) (*Row, error) {
 
 	for {
 		line, err := repo.io.ReadString('\n')
-		log.Printf("line: %s", line)
+
 		if err != nil {
 			if err == io.EOF {
 				return nil, fmt.Errorf("id is not found: %s", key)
@@ -119,11 +108,13 @@ func (repo *FileURLRepository) findRowBy(userID string) ([]LinkItem, error) {
 	for {
 		line, err := repo.io.ReadString('\n')
 		log.Printf("line: %s", line)
+
 		if err != nil {
+
 			if err == io.EOF {
 				return items, nil
-				//return nil, fmt.Errorf("userID is not found: %s", userID)
 			}
+
 			return nil, err
 		}
 

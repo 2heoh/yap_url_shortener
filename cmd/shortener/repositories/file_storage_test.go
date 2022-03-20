@@ -18,7 +18,7 @@ func TestFileStorageNonEmptyStorageWriteAndReadOneURL(t *testing.T) {
 
 	repository := repositories.NewFileURLRepository("./test.db")
 
-	err := repository.AddBy("test", "https://example.com", "1")
+	err := repository.Add("test", "https://example.com", "1")
 	require.NoError(t, err)
 
 	url, err := repository.Get("test")
@@ -38,7 +38,7 @@ func TestFileStorageEmptyStorageWriteAndReadTwoURLs(t *testing.T) {
 
 	repository := repositories.NewFileURLRepository("./test.db")
 
-	err := repository.AddBy("test", "https://example.com", "1")
+	err := repository.Add("test", "https://example.com", "1")
 	require.NoError(t, err)
 
 	url, err := repository.Get("test")
@@ -46,7 +46,7 @@ func TestFileStorageEmptyStorageWriteAndReadTwoURLs(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "https://example.com", url)
 
-	err = repository.AddBy("test2", "https://example2.com", "2")
+	err = repository.Add("test2", "https://example2.com", "2")
 	require.NoError(t, err)
 
 	url, err = repository.Get("test2")
@@ -65,7 +65,7 @@ func TestFileStorageWithExistingStorageAddingSameRecord(t *testing.T) {
 
 	repository := repositories.NewFileURLRepository("./test.db")
 
-	err := repository.AddBy("id", "url", "user")
+	err := repository.Add("id", "url", "user")
 	require.NoError(t, err)
 
 	content, _ := os.ReadFile("./test.db")
@@ -84,18 +84,23 @@ func TestFileStorageReadAllIDs(t *testing.T) {
 
 	repository := repositories.NewFileURLRepository("./test.db")
 
-	urls := repository.GetAllBy("a")
+	urls := repository.GetAllFor("a")
 
 	require.Equal(t, len(urls), 1)
 	require.Equal(t, urls[0].OriginalURL, "c")
+	require.Equal(t, urls[0].ShortURL, "b")
 
-	//url, err = repository.Get("t")
-	//
-	//require.NoError(t, err)
-	//require.Equal(t, url, "v")
-	//
-	//url, err = repository.Get("test")
-	//
-	//require.NoError(t, err)
-	//require.Equal(t, url, "https://example.com")
+	urls = repository.GetAllFor("t")
+
+	require.Equal(t, len(urls), 1)
+	require.Equal(t, urls[0].OriginalURL, "u")
+	require.Equal(t, urls[0].ShortURL, "v")
+
+	urls = repository.GetAllFor("1")
+
+	require.Equal(t, len(urls), 1)
+
+	require.Equal(t, urls[0].OriginalURL, "https://example.com")
+	require.Equal(t, urls[0].ShortURL, "test")
+
 }

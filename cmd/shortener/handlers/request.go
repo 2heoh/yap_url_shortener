@@ -28,7 +28,7 @@ func NewHandler(service services.Shorter, baseURL string) *Handler {
 	}
 
 	h.Use(middleware.Logger)
-	h.Use(SignedCookie)
+	h.Use(HandleSignedCookie)
 	h.Use(Zipper)
 
 	h.Post("/", h.PostURL)
@@ -43,15 +43,9 @@ func NewHandler(service services.Shorter, baseURL string) *Handler {
 }
 
 func (h *Handler) GetURLSForUser(w http.ResponseWriter, r *http.Request) {
-	//request := SignedRequest{r}
-
-	//id, err := request.GetUserID()
-	//if err != nil {
-	//	log.Printf("Error: %v", err)
-	//}
-
 	log.Printf(" UserID: %s ", UserID)
 	urls, err := h.urls.RetrieveURLsForUser(UserID)
+
 	if err != nil {
 		log.Printf("can't get urls: %v", err)
 	}
@@ -61,9 +55,8 @@ func (h *Handler) GetURLSForUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result := []repositories.LinkItem{}
+	var result []repositories.LinkItem
 	for _, url := range urls {
-		fmt.Printf(" * %v \n", url.ShortURL)
 		result = append(result, repositories.LinkItem{
 			OriginalURL: url.OriginalURL,
 			ShortURL:    h.baseURL + "/" + url.ShortURL,
@@ -102,8 +95,8 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-	id, err := h.urls.CreateURLForUser(string(b), UserID)
 
+	id, err := h.urls.CreateURL(string(b), UserID)
 	if errors.Is(err, services.ErrEmptyURL) {
 		http.Error(w, "missed url", http.StatusBadRequest)
 

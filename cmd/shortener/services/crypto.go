@@ -3,6 +3,8 @@ package services
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"encoding/hex"
+	"math/rand"
 )
 
 type crypto struct {
@@ -11,24 +13,14 @@ type crypto struct {
 	nonce    []byte
 }
 
-func (c *crypto) Encrypt(id []byte) []byte {
-	return c.aesgcm.Seal(nil, c.nonce, id, nil)
-}
-func (c *crypto) Decrypt(src []byte) ([]byte, error) {
-	return c.aesgcm.Open(nil, c.nonce, src, nil) // расшифровываем
-}
-
-func generateNonce(size int) []byte {
-	b := make([]byte, size)
-	for i := 0; i < size; i++ {
-		b[i] = byte(i)
-	}
-	return b
-}
+const (
+	userIdLength = 16
+	letterBytes  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	secretKey    = "1234567890abcdef1234567890abcdef"
+)
 
 func NewCrypto() (*crypto, error) {
-	secretkey := []byte("1234567890abcdef1234567890abcdef")
-	aesblock, err := aes.NewCipher(secretkey)
+	aesblock, err := aes.NewCipher([]byte(secretKey))
 	if err != nil {
 		return nil, err
 	}
@@ -44,4 +36,55 @@ func NewCrypto() (*crypto, error) {
 		aesgcm:   aesgcm,
 		nonce:    nonce,
 	}, nil
+}
+
+func (c *crypto) encrypt(id []byte) []byte {
+
+	return c.aesgcm.Seal(nil, c.nonce, id, nil)
+}
+
+func (c *crypto) decrypt(src []byte) ([]byte, error) {
+
+	return c.aesgcm.Open(nil, c.nonce, src, nil) // расшифровываем
+}
+
+func generateNonce(size int) []byte {
+	b := make([]byte, size)
+	for i := 0; i < size; i++ {
+		b[i] = byte(i)
+	}
+	return b
+}
+
+func (c *crypto) generateUserID() string {
+	return c.generateRandomString(userIdLength)
+}
+
+func (c *crypto) generateRandomString(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+	}
+	return string(b)
+}
+
+func (c *crypto) GetEncodedSessionValue() string {
+	UserID := c.generateUserID()
+	seal := c.encrypt([]byte(UserID))
+
+	return hex.EncodeToString(seal)
+}
+
+func (c *crypto) GetDecodedUserID(rawCookieValue string) (string, error) {
+	decodedCookieValue, err := hex.DecodeString(rawCookieValue)
+	if err != nil {
+		return "", err
+	}
+
+	decryptedUserID, err := c.decrypt(decodedCookieValue)
+	if err != nil {
+		return "", err
+	}
+
+	return string(decryptedUserID), nil
 }

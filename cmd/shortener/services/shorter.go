@@ -2,15 +2,13 @@ package services
 
 import (
 	"errors"
-	"fmt"
 	"log"
 
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 )
 
 type Shorter interface {
-	//CreateURL(url string) (string, error)
-	CreateURLForUser(url string, userID string) (string, error)
+	CreateURL(url string, userID string) (string, error)
 	RetrieveURL(id string) (string, error)
 	RetrieveURLsForUser(id string) ([]repositories.LinkItem, error)
 }
@@ -29,19 +27,7 @@ func NewShorterURL(repo repositories.Repository) *ShorterURL {
 	return &ShorterURL{repo}
 }
 
-//func (s *ShorterURL) CreateURL(url string) (string, error) {
-//	if url == "" {
-//		return "", ErrEmptyURL
-//	}
-//
-//	id := GenerateID(url)
-//
-//	s.repository.Add(id, url)
-//
-//	return id, nil
-//}
-
-func (s *ShorterURL) CreateURLForUser(url string, userID string) (string, error) {
+func (s *ShorterURL) CreateURL(url string, userID string) (string, error) {
 	if url == "" {
 		return "", ErrEmptyURL
 	}
@@ -50,7 +36,7 @@ func (s *ShorterURL) CreateURLForUser(url string, userID string) (string, error)
 
 	log.Printf("userID: %v", userID)
 
-	s.repository.AddBy(id, url, userID)
+	s.repository.Add(id, url, userID)
 
 	return id, nil
 }
@@ -69,7 +55,7 @@ func (s *ShorterURL) RetrieveURL(id string) (string, error) {
 }
 
 func (s *ShorterURL) RetrieveURLsForUser(id string) ([]repositories.LinkItem, error) {
-	fmt.Printf(" ** %v \n", id)
-	result := s.repository.GetAllBy(id)
+	result := s.repository.GetAllFor(id)
+
 	return result, nil
 }

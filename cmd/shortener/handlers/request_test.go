@@ -18,7 +18,7 @@ import (
 
 type TestableService struct{}
 
-func (tg *TestableService) CreateURLForUser(url string, userID string) (string, error) {
+func (tg *TestableService) CreateURL(url string, userID string) (string, error) {
 	if url == "" {
 		return "", services.ErrEmptyURL
 	}
@@ -39,13 +39,13 @@ func (tg *TestableService) RetrieveURLsForUser(id string) ([]repositories.LinkIt
 
 }
 
-func (tg *TestableService) CreateURL(url string) (string, error) {
-	if url == "" {
-		return "", services.ErrEmptyURL
-	}
-
-	return "test_url", nil
-}
+//func (tg *TestableService) CreateURL(url string) (string, error) {
+//	if url == "" {
+//		return "", services.ErrEmptyURL
+//	}
+//
+//	return "test_url", nil
+//}
 
 func (tg *TestableService) RetrieveURL(id string) (string, error) {
 	if id == "non-existing" {

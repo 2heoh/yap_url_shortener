@@ -12,7 +12,7 @@ func TestAddToRepository(t *testing.T) {
 
 	repository := repositories.NewInmemoryURLRepository()
 
-	repository.AddBy("test", "https://example.com", "id")
+	repository.Add("test", "https://example.com", "id")
 
 	url, err := repository.Get("test")
 

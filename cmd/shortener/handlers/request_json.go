@@ -35,9 +35,7 @@ func (h *Handler) PostJSONURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Printf("USER ID: %v", UserID)
-
-	id, err := h.urls.CreateURLForUser(request.URL, string(UserID))
+	id, err := h.urls.CreateURL(request.URL, UserID)
 
 	if errors.Is(err, services.ErrEmptyURL) {
 		h.ReturnJSONError(w, "missed url")

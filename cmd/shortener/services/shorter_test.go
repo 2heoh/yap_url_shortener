@@ -10,11 +10,11 @@ import (
 
 type TestableRepo struct{}
 
-func (tr *TestableRepo) AddBy(id string, url string, userID string) error {
+func (tr *TestableRepo) Add(id string, url string, userID string) error {
 	return nil
 }
 
-func (tr *TestableRepo) GetAllBy(userID string) []repositories.LinkItem {
+func (tr *TestableRepo) GetAllFor(userID string) []repositories.LinkItem {
 	//TODO implement me
 	panic("implement me")
 }
@@ -24,9 +24,9 @@ func (tr *TestableRepo) GetAll(userID string) []repositories.LinkItem {
 	panic("implement me")
 }
 
-func (tr *TestableRepo) Add(url, id string) error {
-	return nil
-}
+//func (tr *TestableRepo) Add(url, id string) error {
+//	return nil
+//}
 func (tr *TestableRepo) Get(id string) (string, error) {
 	if id == "non-existing" {
 		return "", errors.New("id is not found: " + id)
@@ -39,7 +39,7 @@ func TestShorterURLCreation(t *testing.T) {
 
 	service := services.NewShorterURL(&TestableRepo{})
 
-	id, err := service.CreateURLForUser("https://example.com", "1")
+	id, err := service.CreateURL("https://example.com", "1")
 
 	require.NoError(t, err)
 	require.Equal(t, "96248650", id)
@@ -50,7 +50,7 @@ func TestShorterURLCreationWhenURLIsEmpty(t *testing.T) {
 
 	service := services.NewShorterURL(&TestableRepo{})
 
-	id, err := service.CreateURLForUser(string([]byte{}), "1")
+	id, err := service.CreateURL(string([]byte{}), "1")
 
 	t.Logf(id, err)
 	require.Equal(t, services.ErrEmptyURL, err)

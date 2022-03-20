@@ -2,14 +2,12 @@ package repositories
 
 import (
 	"errors"
-	"fmt"
-	"log"
 )
 
 type Repository interface {
 	Get(id string) (string, error)
-	AddBy(id string, url string, userID string) error
-	GetAllBy(userID string) []LinkItem
+	Add(id string, url string, userID string) error
+	GetAllFor(userID string) []LinkItem
 }
 
 type LinkItem struct {
@@ -22,9 +20,7 @@ type InMemoryRepository struct {
 	linksByUser map[string][]LinkItem
 }
 
-func (r *InMemoryRepository) GetAllBy(userID string) []LinkItem {
-
-	fmt.Printf(" ==%v \n", r.linksByUser[userID])
+func (r *InMemoryRepository) GetAllFor(userID string) []LinkItem {
 
 	if links, found := r.linksByUser[userID]; found {
 		return links
@@ -36,24 +32,19 @@ func (r *InMemoryRepository) GetAllBy(userID string) []LinkItem {
 var ErrNotFound = errors.New("id is not found")
 
 func NewInmemoryURLRepository() Repository {
+
 	return &InMemoryRepository{
 		map[string]string{"yandex": "https://yandex.ru/"},
 		map[string][]LinkItem{"1": nil},
 	}
 }
 
-func (r *InMemoryRepository) AddBy(id string, url string, userID string) error {
+func (r *InMemoryRepository) Add(id string, url string, userID string) error {
 	r.links[id] = url
 	r.linksByUser[userID] = append(r.linksByUser[userID], LinkItem{id, url})
-	log.Printf(" [%s => %s] ", userID, id)
+
 	return nil
 }
-
-//func (r *InMemoryRepository) Add(id string, url string) error {
-//	r.links[id] = url
-//	log.Printf(" // %s => %s ", url, id)
-//	return nil
-//}
 
 func (r *InMemoryRepository) Get(id string) (string, error) {
 	if url, found := r.links[id]; found {
