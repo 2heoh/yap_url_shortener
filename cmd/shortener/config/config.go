@@ -39,11 +39,11 @@ func (na *NetAddress) Set(flagValue string) error {
 		return err
 	}
 	na.Port = port
+
 	return nil
 }
 
 func LoadEnvs(config *Config) (*Config, error) {
-
 	if err := env.Parse(config); err != nil {
 		return config, ErrConfigIsNotLoaded
 	}

@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v4"
 	"log"
+
+	"github.com/jackc/pgx/v4"
 )
 
 var (
@@ -36,7 +37,7 @@ func (D DBRepository) Ping() error {
 		return ErrDBConnection
 	}
 
-	return nil
+	return D.connection.Ping(context.Background())
 }
 
 func NewDatabaseRepository(dsn string) Repository {
@@ -51,7 +52,6 @@ func connect(dsn string) *pgx.Conn {
 		log.Printf(fmt.Sprintf("Unable to connect to database: %v", err.Error()))
 		return nil
 	}
-	defer conn.Close(context.Background())
 
 	return conn
 }
