@@ -5,6 +5,7 @@ import (
 	"crypto/cipher"
 	"encoding/hex"
 	"math/rand"
+	"time"
 )
 
 type crypto struct {
@@ -14,7 +15,7 @@ type crypto struct {
 }
 
 const (
-	userIdLength = 16
+	userIDLength = 16
 	letterBytes  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	secretKey    = "1234567890abcdef1234567890abcdef"
 )
@@ -56,11 +57,12 @@ func generateNonce(size int) []byte {
 	return b
 }
 
-func (c *crypto) generateUserID() string {
-	return c.generateRandomString(userIdLength)
+func (c *crypto) GenerateUserID() string {
+	return c.generateRandomString(userIDLength)
 }
 
 func (c *crypto) generateRandomString(n int) string {
+	rand.Seed(time.Now().UnixNano())
 	b := make([]byte, n)
 	for i := range b {
 		b[i] = letterBytes[rand.Intn(len(letterBytes))]
@@ -68,9 +70,8 @@ func (c *crypto) generateRandomString(n int) string {
 	return string(b)
 }
 
-func (c *crypto) GetEncodedSessionValue() string {
-	UserID := c.generateUserID()
-	seal := c.encrypt([]byte(UserID))
+func (c *crypto) GetEncodedSessionValue(userID string) string {
+	seal := c.encrypt([]byte(userID))
 
 	return hex.EncodeToString(seal)
 }

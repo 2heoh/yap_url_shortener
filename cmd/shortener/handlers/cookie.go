@@ -26,11 +26,12 @@ func HandleSignedCookie(next http.Handler) http.Handler {
 		session, err := r.Cookie("session")
 		if err != nil {
 			log.Printf("Cant find cookie - set new")
+			UserID = crypto.GenerateUserID()
 			http.SetCookie(w, &http.Cookie{
 				Name:    "session",
 				Path:    "/",
 				Expires: time.Now().AddDate(1, 0, 0),
-				Value:   crypto.GetEncodedSessionValue(),
+				Value:   crypto.GetEncodedSessionValue(UserID),
 			})
 			next.ServeHTTP(w, r)
 
