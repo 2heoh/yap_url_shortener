@@ -10,6 +10,11 @@ import (
 
 type TestableRepo struct{}
 
+func (tr *TestableRepo) Ping() error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (tr *TestableRepo) Add(id string, url string, userID string) error {
 	return nil
 }

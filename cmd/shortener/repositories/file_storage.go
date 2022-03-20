@@ -20,6 +20,10 @@ type FileURLRepository struct {
 	file *os.File
 }
 
+func (repo *FileURLRepository) Ping() error {
+	return nil
+}
+
 func (repo *FileURLRepository) Add(key string, url string, userID string) error {
 	items, _ := repo.findRowBy(userID)
 

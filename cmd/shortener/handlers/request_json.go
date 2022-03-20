@@ -43,7 +43,7 @@ func (h *Handler) PostJSONURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.ReturnJSONResponse(w, h.baseURL+"/"+id)
+	h.ReturnJSONResponse(w, h.config.BaseURL+"/"+id)
 
 	if err != nil {
 		log.Printf("Error: %v", err)

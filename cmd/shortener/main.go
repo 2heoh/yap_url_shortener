@@ -28,7 +28,7 @@ func main() {
 			cfg.ServerAddress,
 			handlers.NewHandler(
 				services.NewShorterURL(repositories.Init(cfg)),
-				cfg.BaseURL,
+				cfg,
 			),
 		),
 	)

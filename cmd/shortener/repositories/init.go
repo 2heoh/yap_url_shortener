@@ -12,6 +12,11 @@ func Init(cfg *config.Config) Repository {
 		return NewFileURLRepository(cfg.FileStoragePath)
 	}
 
+	if cfg.DSN != "" {
+		log.Printf("used database: %s", cfg.DSN)
+		return NewDatabaseRepository(cfg.DSN)
+	}
+
 	log.Println("Use in memory storage")
 	return NewInmemoryURLRepository()
 

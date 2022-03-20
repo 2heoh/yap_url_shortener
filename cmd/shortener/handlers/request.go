@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
 	"io"
 	"log"
 	"net/http"
@@ -16,15 +17,15 @@ import (
 
 type Handler struct {
 	*chi.Mux
-	urls    services.Shorter
-	baseURL string
+	urls   services.Shorter
+	config *config.Config
 }
 
-func NewHandler(service services.Shorter, baseURL string) *Handler {
+func NewHandler(service services.Shorter, config *config.Config) *Handler {
 	h := &Handler{
-		Mux:     chi.NewMux(),
-		urls:    service,
-		baseURL: baseURL,
+		Mux:    chi.NewMux(),
+		urls:   service,
+		config: config,
 	}
 
 	h.Use(middleware.Logger)
@@ -32,6 +33,7 @@ func NewHandler(service services.Shorter, baseURL string) *Handler {
 	h.Use(Zipper)
 
 	h.Post("/", h.PostURL)
+	h.Get("/ping", h.PingDB)
 	h.Post("/api/shorten", h.PostJSONURL)
 	h.Get("/{id}", h.GetURL)
 	h.Get("/api/user/urls", h.GetURLSForUser)
@@ -59,7 +61,7 @@ func (h *Handler) GetURLSForUser(w http.ResponseWriter, r *http.Request) {
 	for _, url := range urls {
 		result = append(result, repositories.LinkItem{
 			OriginalURL: url.OriginalURL,
-			ShortURL:    h.baseURL + "/" + url.ShortURL,
+			ShortURL:    h.config.BaseURL + "/" + url.ShortURL,
 		})
 	}
 
@@ -105,7 +107,8 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(fmt.Sprintf("%s/%s", h.baseURL, id)))
+	_, err = w.Write([]byte(fmt.Sprintf("%s/%s", h.config.BaseURL, id)))
+
 	if err != nil {
 		log.Printf("Error: %v", err)
 	}

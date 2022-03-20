@@ -4,24 +4,18 @@ import (
 	"errors"
 )
 
-type Repository interface {
-	Get(id string) (string, error)
-	Add(id string, url string, userID string) error
-	GetAllFor(userID string) []LinkItem
-}
-
-type LinkItem struct {
-	ShortURL    string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-}
-
 type InMemoryRepository struct {
 	links       map[string]string
 	linksByUser map[string][]LinkItem
 }
 
-func (r *InMemoryRepository) GetAllFor(userID string) []LinkItem {
+var ErrNotFound = errors.New("id is not found")
 
+func (r *InMemoryRepository) Ping() error {
+	return nil
+}
+
+func (r *InMemoryRepository) GetAllFor(userID string) []LinkItem {
 	if links, found := r.linksByUser[userID]; found {
 		return links
 	}
@@ -29,10 +23,7 @@ func (r *InMemoryRepository) GetAllFor(userID string) []LinkItem {
 	return nil
 }
 
-var ErrNotFound = errors.New("id is not found")
-
 func NewInmemoryURLRepository() Repository {
-
 	return &InMemoryRepository{
 		map[string]string{"yandex": "https://yandex.ru/"},
 		map[string][]LinkItem{"1": nil},

@@ -21,3 +21,7 @@ git fetch template && git checkout template/main .github
 ```
 
 Затем добавьте полученные изменения в свой репозиторий.
+
+## Postgres
+
+docker run -d -e POSTGRES_PASSWORD=postgres -e PGDATA=/var/lib/postgresql/data/pgdata -v ${PWD}/db:/var/lib/postgresql/data -p5432:5432 postgres

@@ -11,6 +11,7 @@ type Shorter interface {
 	CreateURL(url string, userID string) (string, error)
 	RetrieveURL(id string) (string, error)
 	RetrieveURLsForUser(id string) ([]repositories.LinkItem, error)
+	Ping() error
 }
 
 var (
@@ -21,6 +22,10 @@ var (
 
 type ShorterURL struct {
 	repository repositories.Repository
+}
+
+func (s *ShorterURL) Ping() error {
+	return s.repository.Ping()
 }
 
 func NewShorterURL(repo repositories.Repository) *ShorterURL {

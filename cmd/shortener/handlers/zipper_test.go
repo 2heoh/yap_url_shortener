@@ -3,6 +3,7 @@ package handlers_test
 import (
 	"bytes"
 	"compress/gzip"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -44,7 +45,10 @@ func TestZipperMiddleware(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			r := handlers.Zipper(handlers.NewHandler(testURLService, "http://test"))
+
+			conf := &config.Config{BaseURL: "http://test"}
+
+			r := handlers.Zipper(handlers.NewHandler(testURLService, conf))
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 			req, err := http.NewRequest(tt.request.method, ts.URL+tt.request.path, tt.request.body)

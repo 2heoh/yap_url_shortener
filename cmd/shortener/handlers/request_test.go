@@ -2,6 +2,7 @@ package handlers_test
 
 import (
 	"errors"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 	"io"
 	"io/ioutil"
@@ -17,6 +18,11 @@ import (
 )
 
 type TestableService struct{}
+
+func (tg *TestableService) Ping() error {
+	//TODO implement me
+	panic("implement me")
+}
 
 func (tg *TestableService) CreateURL(url string, userID string) (string, error) {
 	if url == "" {
@@ -212,7 +218,8 @@ func TestRequestHandler(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			r := handlers.NewHandler(testURLService, "http://test")
+			conf := &config.Config{BaseURL: "http://test"}
+			r := handlers.NewHandler(testURLService, conf)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 			req, err := http.NewRequest(tt.request.method, ts.URL+tt.request.path, tt.request.body)

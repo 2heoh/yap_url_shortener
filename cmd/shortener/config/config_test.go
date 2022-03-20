@@ -51,3 +51,12 @@ func TestSetValueForFileStoragePath(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "/path/to/file", cfg.FileStoragePath)
 }
+
+func TestSetValueForDSNPath(t *testing.T) {
+	t.Setenv("DATABASE_DSN", "postgres://test:test@localhost:5432/dbname")
+
+	cfg, err := config.LoadEnvs(&config.Config{})
+
+	require.NoError(t, err)
+	require.Equal(t, "postgres://test:test@localhost:5432/dbname", cfg.DSN)
+}
