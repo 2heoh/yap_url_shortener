@@ -8,11 +8,6 @@ import (
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 )
 
-//type URLItem struct {
-//	CorrelationID string `json:"correlation_id"`
-//	OriginalURL   string `json:"original_url"`
-//}
-
 type Shorter interface {
 	CreateURL(url string, userID string) (string, error)
 	CreateBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error)
@@ -48,7 +43,10 @@ func (s *ShorterURL) CreateURL(url string, userID string) (string, error) {
 
 	log.Printf("userID: %v", userID)
 
-	s.repository.Add(id, url, userID)
+	err := s.repository.Add(id, url, userID)
+	if err != nil {
+		return "", err
+	}
 
 	return id, nil
 }

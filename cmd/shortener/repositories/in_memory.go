@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"errors"
+
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
 )
 
@@ -37,7 +38,6 @@ func (r *InMemoryRepository) GetAllFor(userID string) []entities.LinkItem {
 }
 
 func NewInmemoryURLRepository() Repository {
-
 	return &InMemoryRepository{
 		map[string]string{"yandex": "https://yandex.ru/"},
 		map[string][]entities.LinkItem{"1": nil},

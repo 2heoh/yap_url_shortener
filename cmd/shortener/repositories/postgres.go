@@ -7,11 +7,13 @@ import (
 	"time"
 
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
+	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 )
 
 var (
 	ErrDBConnection = errors.New("no DB connection")
+	ErrKeyExists    = errors.New("key exists")
 )
 
 const timeout = 5 * time.Second
@@ -41,6 +43,7 @@ func (r *DBRepository) AddBatch(urls []entities.URLItem, userID string) ([]entit
 
 	err = tx.Commit(ctx)
 	if err != nil {
+
 		return nil, err
 	}
 
@@ -86,6 +89,7 @@ func (r *DBRepository) Get(key string) (string, error) {
 
 	if err != nil {
 		log.Printf("can't get url: %v", err)
+
 		return "", err
 	}
 
@@ -97,15 +101,23 @@ func (r *DBRepository) Add(key string, url string, userID string) error {
 	defer cancel()
 
 	sql := "insert into links (userid, key, url) values ($1, $2, $3)"
-
 	ret, err := r.connection.Exec(ctx, sql, userID, key, url)
-	log.Printf("insert result: %v", ret)
 
 	if err != nil {
-		log.Printf("can't insert: %v", err)
+		log.Printf("can't insert: [%T] %v", err, err.(*pgconn.PgError).Code)
+
+		if err.(*pgconn.PgError).Code == "23505" {
+			log.Printf("Key alrady exists: %s", key)
+
+			return ErrKeyExists
+		}
+
+		return err
 	}
 
-	return err
+	log.Printf("insert result: %v", ret)
+
+	return nil
 }
 
 func (r *DBRepository) GetAllFor(userID string) []entities.LinkItem {

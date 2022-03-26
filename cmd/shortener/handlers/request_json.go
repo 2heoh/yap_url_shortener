@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 	"io"
 	"log"
 	"net/http"
@@ -36,6 +37,11 @@ func (h *Handler) PostJSONURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := h.urls.CreateURL(request.URL, UserID)
+	if errors.Is(err, repositories.ErrKeyExists) {
+		http.Error(w, "", http.StatusConflict)
+
+		return
+	}
 
 	if errors.Is(err, services.ErrEmptyURL) {
 		h.ReturnJSONError(w, "missed url")

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 	"io"
 	"log"
 	"net/http"
@@ -100,6 +101,12 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := h.urls.CreateURL(string(b), UserID)
+	if errors.Is(err, repositories.ErrKeyExists) {
+		http.Error(w, "missed url", http.StatusConflict)
+
+		return
+	}
+
 	if errors.Is(err, services.ErrEmptyURL) {
 		http.Error(w, "missed url", http.StatusBadRequest)
 
