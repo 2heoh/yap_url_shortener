@@ -2,8 +2,6 @@ package handlers_test
 
 import (
 	"errors"
-	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
-	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/handlers"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"github.com/stretchr/testify/assert"
@@ -19,9 +19,9 @@ import (
 
 type TestableService struct{}
 
-func (tg *TestableService) CreateBatch(urls []services.URLItem, userID string) ([]services.ShortenURL, error) {
+func (tg *TestableService) CreateBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
 
-	var items = []services.ShortenURL{{Key: urls[0].CorrelationID}}
+	var items = []entities.ShortenURL{{Key: urls[0].CorrelationID}}
 
 	return items, nil
 }
@@ -39,14 +39,14 @@ func (tg *TestableService) CreateURL(url string, userID string) (string, error) 
 	return "test_url", nil
 }
 
-func (tg *TestableService) RetrieveURLsForUser(id string) ([]repositories.LinkItem, error) {
+func (tg *TestableService) RetrieveURLsForUser(id string) ([]entities.LinkItem, error) {
 	if id == "non-existing" {
 		return nil, errors.New("id is not found: " + id)
 	}
 
-	url := repositories.LinkItem{ShortURL: "test", OriginalURL: "https://example.com/"}
+	url := entities.LinkItem{ShortURL: "test", OriginalURL: "https://example.com/"}
 
-	result := []repositories.LinkItem{url}
+	result := []entities.LinkItem{url}
 
 	return result, nil
 

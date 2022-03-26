@@ -3,6 +3,7 @@ package repositories
 import (
 	"bufio"
 	"fmt"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
 	"io"
 	"log"
 	"os"
@@ -18,6 +19,19 @@ type Row struct {
 type FileURLRepository struct {
 	io   *bufio.ReadWriter
 	file *os.File
+}
+
+func (repo *FileURLRepository) AddBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
+
+	var result []entities.ShortenURL
+	for _, item := range urls {
+		err := repo.Add(item.CorrelationID, item.OriginalURL, userID)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, entities.ShortenURL{Key: item.CorrelationID})
+	}
+	return result, nil
 }
 
 func (repo *FileURLRepository) Ping() error {
@@ -42,7 +56,7 @@ func (repo *FileURLRepository) Add(key string, url string, userID string) error 
 	})
 }
 
-func (repo *FileURLRepository) GetAllFor(userID string) []LinkItem {
+func (repo *FileURLRepository) GetAllFor(userID string) []entities.LinkItem {
 	rows, err := repo.findRowBy(userID)
 	if err != nil {
 		return nil
@@ -101,13 +115,13 @@ func (repo *FileURLRepository) findRowByKey(key string) (*Row, error) {
 	}
 }
 
-func (repo *FileURLRepository) findRowBy(userID string) ([]LinkItem, error) {
+func (repo *FileURLRepository) findRowBy(userID string) ([]entities.LinkItem, error) {
 	_, err := repo.file.Seek(0, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	var items []LinkItem
+	var items []entities.LinkItem
 
 	for {
 		line, err := repo.io.ReadString('\n')
@@ -126,7 +140,7 @@ func (repo *FileURLRepository) findRowBy(userID string) ([]LinkItem, error) {
 			row := splitLine(strings.TrimSpace(line))
 
 			if userID == row.userID {
-				items = append(items, LinkItem{ShortURL: row.key, OriginalURL: row.url})
+				items = append(items, entities.LinkItem{ShortURL: row.key, OriginalURL: row.url})
 			}
 		}
 	}

@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
 	"io"
 	"log"
 	"net/http"
 
-	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -58,9 +58,9 @@ func (h *Handler) GetURLSForUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var result []repositories.LinkItem
+	var result []entities.LinkItem
 	for _, url := range urls {
-		result = append(result, repositories.LinkItem{
+		result = append(result, entities.LinkItem{
 			OriginalURL: url.OriginalURL,
 			ShortURL:    h.config.BaseURL + "/" + url.ShortURL,
 		})

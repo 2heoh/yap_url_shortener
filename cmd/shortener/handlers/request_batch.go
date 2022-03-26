@@ -3,20 +3,13 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
 	"io"
 	"log"
 	"net/http"
-
-	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 )
 
-type ShortenResultURL struct {
-	CorrelationID string `json:"correlation_id"`
-	ShortURL      string `json:"short_url"`
-}
-
 func (h *Handler) PostBatch(w http.ResponseWriter, r *http.Request) {
-	log.Printf("run batch")
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		h.ReturnJSONError(w, fmt.Sprintf("can't read body: %v", err))
@@ -24,24 +17,22 @@ func (h *Handler) PostBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var urls []services.URLItem
+	var urls []entities.URLItem
 	err = json.Unmarshal(body, &urls)
 	if err != nil {
 		h.ReturnJSONError(w, fmt.Sprintf("bad json: %v", err))
 		return
 	}
 
-	log.Printf("URLS: %v ", urls)
-
 	shortenURLS, err := h.urls.CreateBatch(urls, UserID)
 	if err != nil {
-		h.ReturnJSONError(w, fmt.Sprintf("can't get urls: %s", err))
+		h.ReturnJSONError(w, fmt.Sprintf("can't get add: %s", err))
 		return
 	}
 
-	var result []ShortenResultURL
+	var result []entities.ShortenResultURL
 	for _, item := range shortenURLS {
-		result = append(result, ShortenResultURL{
+		result = append(result, entities.ShortenResultURL{
 			CorrelationID: item.Key,
 			ShortURL:      fmt.Sprintf("%s/%s", h.config.BaseURL, item.Key),
 		})

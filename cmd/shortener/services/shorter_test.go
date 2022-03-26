@@ -2,13 +2,19 @@ package services_test
 
 import (
 	"errors"
-	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
+	"testing"
+
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 type TestableRepo struct{}
+
+func (tr *TestableRepo) AddBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
+	//TODO implement me
+	panic("implement me")
+}
 
 func (tr *TestableRepo) Ping() error {
 	//TODO implement me
@@ -19,12 +25,12 @@ func (tr *TestableRepo) Add(id string, url string, userID string) error {
 	return nil
 }
 
-func (tr *TestableRepo) GetAllFor(userID string) []repositories.LinkItem {
+func (tr *TestableRepo) GetAllFor(userID string) []entities.LinkItem {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (tr *TestableRepo) GetAll(userID string) []repositories.LinkItem {
+func (tr *TestableRepo) GetAll(userID string) []entities.LinkItem {
 	//TODO implement me
 	panic("implement me")
 }

@@ -6,6 +6,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
 	"github.com/jackc/pgx/v4"
 )
 
@@ -17,6 +18,33 @@ const timeout = 5 * time.Second
 
 type DBRepository struct {
 	connection *pgx.Conn
+}
+
+func (r *DBRepository) AddBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
+	var result []entities.ShortenURL
+
+	ctx := context.Background()
+	tx, err := r.connection.Begin(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	defer tx.Rollback(ctx)
+
+	for _, item := range urls {
+		_, err = tx.Exec(ctx, "insert into links (userid, key, url) values ($1, $2, $3)", userID, item.CorrelationID, item.OriginalURL)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, entities.ShortenURL{Key: item.CorrelationID})
+	}
+
+	err = tx.Commit(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func NewDatabaseRepository(dsn string) Repository {
@@ -33,7 +61,12 @@ func (r *DBRepository) init() {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	sql := "CREATE TABLE IF NOT EXISTS links (userid varchar(16) NOT NULL, key varchar(36) NOT NULL, url varchar(450) NOT NULL, PRIMARY KEY (key))"
+	sql := `CREATE TABLE IF NOT EXISTS links(
+				userid varchar(16) NOT NULL,
+				key varchar(36) NOT NULL, 
+				url varchar(450) NOT NULL, 
+				PRIMARY KEY (key)
+            )`
 
 	_, err := r.connection.Exec(ctx, sql)
 	if err != nil {
@@ -50,6 +83,7 @@ func (r *DBRepository) Get(key string) (string, error) {
 
 	var url string
 	err := r.connection.QueryRow(ctx, sql, key).Scan(&url)
+
 	if err != nil {
 		log.Printf("can't get url: %v", err)
 		return "", err
@@ -74,7 +108,7 @@ func (r *DBRepository) Add(key string, url string, userID string) error {
 	return err
 }
 
-func (r *DBRepository) GetAllFor(userID string) []LinkItem {
+func (r *DBRepository) GetAllFor(userID string) []entities.LinkItem {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
@@ -87,10 +121,10 @@ func (r *DBRepository) GetAllFor(userID string) []LinkItem {
 	}
 	defer rows.Close()
 
-	links := make([]LinkItem, 0)
+	links := make([]entities.LinkItem, 0)
 
 	for rows.Next() {
-		var link LinkItem
+		var link entities.LinkItem
 		err = rows.Scan(&link.ShortURL, &link.OriginalURL)
 		if err != nil {
 			return nil
