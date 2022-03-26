@@ -60,6 +60,4 @@ func (h *Handler) PostBatch(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Printf("Error: %v", err)
 	}
-
-	return
 }

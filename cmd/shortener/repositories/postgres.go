@@ -33,7 +33,7 @@ func (r *DBRepository) init() {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	sql := "CREATE TABLE IF NOT EXISTS links (userid varchar(16) NOT NULL, key varchar(9) NOT NULL, url varchar(450) NOT NULL, PRIMARY KEY (key))"
+	sql := "CREATE TABLE IF NOT EXISTS links (userid varchar(16) NOT NULL, key varchar(36) NOT NULL, url varchar(450) NOT NULL, PRIMARY KEY (key))"
 
 	_, err := r.connection.Exec(ctx, sql)
 	if err != nil {
