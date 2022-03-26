@@ -37,6 +37,7 @@ func NewHandler(service services.Shorter, config *config.Config) *Handler {
 	h.Post("/api/shorten", h.PostJSONURL)
 	h.Get("/{id}", h.GetURL)
 	h.Get("/api/user/urls", h.GetURLSForUser)
+	h.Post("/api/shorten/batch", h.PostBatch)
 	h.Get("/", func(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, "empty id", http.StatusBadRequest)
 	})

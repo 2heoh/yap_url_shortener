@@ -3,7 +3,6 @@ package handlers_test
 import (
 	"bytes"
 	"compress/gzip"
-	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/handlers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

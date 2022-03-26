@@ -59,7 +59,6 @@ func (r *DBRepository) Get(key string) (string, error) {
 }
 
 func (r *DBRepository) Add(key string, url string, userID string) error {
-
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 

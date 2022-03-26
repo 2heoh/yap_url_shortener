@@ -19,6 +19,13 @@ import (
 
 type TestableService struct{}
 
+func (tg *TestableService) CreateBatch(urls []services.URLItem) ([]services.ShortenURL, error) {
+
+	var items = []services.ShortenURL{{Key: urls[0].CorrelationID}}
+
+	return items, nil
+}
+
 func (tg *TestableService) Ping() error {
 	//TODO implement me
 	panic("implement me")
@@ -142,7 +149,7 @@ func TestRequestHandler(t *testing.T) {
 			},
 			expected: expected{
 				code:        201,
-				response:    "http://test/test_url",
+				response:    "http://test_host/test_url",
 				contentType: "text/html; charset=utf-8",
 			},
 		},
@@ -168,7 +175,7 @@ func TestRequestHandler(t *testing.T) {
 			},
 			expected: expected{
 				code:        201,
-				response:    `{"result":"http://test/test_url"}`,
+				response:    `{"result":"http://test_host/test_url"}`,
 				contentType: "application/json",
 			},
 		},
@@ -196,29 +203,28 @@ func TestRequestHandler(t *testing.T) {
 				code: 405,
 			},
 		},
-		//{
-		//	name: "Content-Encoding: gzip",
-		//	request: request{
-		//		method: http.MethodPost,
-		//		path:   "/",
-		//		body:   strings.NewReader("https://google.com/"),
-		//		headers: map[string]string{
-		//			"Content-Encoding": "gzip",
-		//			"Accept-Encoding":  "gzip",
-		//		},
-		//	},
-		//	expected: expected{
-		//		code:        201,
-		//		response:    "1",
-		//		contentType: "text/html; charset=utf-8",
-		//	},
-		//},
+		{
+			name: "post request /api/shorten/batch with proper json return batch of shorten urls",
+			request: request{
+				method: http.MethodPost,
+				path:   "/api/shorten/batch",
+				body: strings.NewReader(
+					`[{"correlation_id": "test_key","original_url": "https://example.com"}]`,
+				),
+			},
+			expected: expected{
+				code:        201,
+				response:    `[{"correlation_id":"test_key","short_url":"http://test_host/test_key"}]`,
+				contentType: "application/json; charset=utf-8",
+			},
+		},
 	}
 	testURLService := &TestableService{}
+
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			conf := &config.Config{BaseURL: "http://test"}
+			conf := &config.Config{BaseURL: "http://test_host"}
 			r := handlers.NewHandler(testURLService, conf)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
