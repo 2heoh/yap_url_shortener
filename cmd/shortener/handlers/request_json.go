@@ -28,7 +28,7 @@ func (h *Handler) PostJSONURL(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-
+	log.Printf("Body: '%s'", body)
 	request := JSONRequestBody{}
 	err = json.Unmarshal(body, &request)
 	if err != nil {

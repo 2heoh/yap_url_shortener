@@ -99,7 +99,7 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-
+	log.Printf("Body: '%s'", string(b))
 	id, err := h.urls.CreateURL(string(b), UserID)
 	if errors.Is(err, repositories.ErrKeyExists) {
 		http.Error(w, "key already exists", http.StatusConflict)
