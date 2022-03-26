@@ -16,6 +16,9 @@ type SignedRequest struct {
 
 func HandleSignedCookie(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
+		log.Printf("== %s %s =========================================================", r.Method, r.URL)
+
 		crypto, err := services.NewCrypto()
 		if err != nil {
 			log.Printf("can't create crypto service: %v", err)
@@ -25,7 +28,7 @@ func HandleSignedCookie(next http.Handler) http.Handler {
 		}
 		session, err := r.Cookie("session")
 		if err != nil {
-			log.Printf("\nCant find cookie - set new")
+			log.Printf("Cant find cookie - set new")
 			UserID = crypto.GenerateUserID()
 			http.SetCookie(w, &http.Cookie{
 				Name:    "session",
