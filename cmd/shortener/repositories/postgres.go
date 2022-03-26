@@ -16,6 +16,19 @@ var (
 	ErrKeyExists    = errors.New("key exists")
 )
 
+//type KeyExistsError struct {
+//	Key string
+//	Err error
+//}
+//
+//func (k *KeyExistsError) Error() string {
+//	return fmt.Sprintf("%s: %v", k.Err, k.Key)
+//}
+//
+//func NewKeyExistsError(key string, err error) error {
+//	return &KeyExistsError{Key: key, Err: err}
+//}
+
 const timeout = 5 * time.Second
 
 type DBRepository struct {
@@ -107,6 +120,7 @@ func (r *DBRepository) Add(key string, url string, userID string) error {
 		log.Printf("can't insert: [%T] %v", err, err.(*pgconn.PgError).Code)
 
 		if err.(*pgconn.PgError).Code == "23505" {
+
 			log.Printf("Key alrady exists: %s", key)
 
 			return ErrKeyExists

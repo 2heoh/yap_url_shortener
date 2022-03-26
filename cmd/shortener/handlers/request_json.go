@@ -42,8 +42,11 @@ func (h *Handler) PostJSONURL(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
+
 	if errors.Is(err, repositories.ErrKeyExists) {
+
 		w.WriteHeader(http.StatusConflict)
 	} else {
 		w.WriteHeader(http.StatusCreated)

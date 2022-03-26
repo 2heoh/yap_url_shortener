@@ -45,7 +45,7 @@ func (s *ShorterURL) CreateURL(url string, userID string) (string, error) {
 
 	err := s.repository.Add(id, url, userID)
 	if err != nil {
-		return "", err
+		return id, err
 	}
 
 	return id, nil
