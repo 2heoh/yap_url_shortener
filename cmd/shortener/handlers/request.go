@@ -101,12 +101,6 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Printf("Body: '%s'", string(b))
 	id, err := h.urls.CreateURL(string(b), UserID)
-	if errors.Is(err, repositories.ErrKeyExists) {
-		http.Error(w, "key already exists", http.StatusConflict)
-
-		return
-	}
-
 	if errors.Is(err, services.ErrEmptyURL) {
 		http.Error(w, "missed url", http.StatusBadRequest)
 
@@ -114,7 +108,11 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusCreated)
+	if errors.Is(err, repositories.ErrKeyExists) {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 	_, err = w.Write([]byte(fmt.Sprintf("%s/%s", h.config.BaseURL, id)))
 
 	if err != nil {

@@ -37,17 +37,16 @@ func (h *Handler) PostJSONURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	id, err := h.urls.CreateURL(request.URL, UserID)
-	if errors.Is(err, repositories.ErrKeyExists) {
-		w.Header().Set("Content-Type", "application/json")
-		http.Error(w, "", http.StatusConflict)
-
-		return
-	}
-
 	if errors.Is(err, services.ErrEmptyURL) {
 		h.ReturnJSONError(w, "missed url")
 
 		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if errors.Is(err, repositories.ErrKeyExists) {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
 	}
 
 	h.ReturnJSONResponse(w, h.config.BaseURL+"/"+id)
@@ -76,8 +75,6 @@ func (h *Handler) ReturnJSONError(w http.ResponseWriter, message string) {
 }
 
 func (h *Handler) ReturnJSONResponse(w http.ResponseWriter, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
 
 	jsonResponse, err := json.Marshal(JSONResponseBody{Result: message})
 
