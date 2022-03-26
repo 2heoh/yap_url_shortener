@@ -19,7 +19,7 @@ import (
 
 type TestableService struct{}
 
-func (tg *TestableService) CreateBatch(urls []services.URLItem) ([]services.ShortenURL, error) {
+func (tg *TestableService) CreateBatch(urls []services.URLItem, userID string) ([]services.ShortenURL, error) {
 
 	var items = []services.ShortenURL{{Key: urls[0].CorrelationID}}
 
@@ -51,14 +51,6 @@ func (tg *TestableService) RetrieveURLsForUser(id string) ([]repositories.LinkIt
 	return result, nil
 
 }
-
-//func (tg *TestableService) CreateURL(url string) (string, error) {
-//	if url == "" {
-//		return "", services.ErrEmptyURL
-//	}
-//
-//	return "test_url", nil
-//}
 
 func (tg *TestableService) RetrieveURL(id string) (string, error) {
 	if id == "non-existing" {

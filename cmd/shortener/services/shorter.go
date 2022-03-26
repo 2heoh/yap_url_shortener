@@ -76,7 +76,6 @@ func (s *ShorterURL) RetrieveURLsForUser(id string) ([]repositories.LinkItem, er
 }
 
 func (s *ShorterURL) CreateBatch(urls []URLItem, userID string) ([]ShortenURL, error) {
-
 	var result []ShortenURL
 	for _, item := range urls {
 		err := s.repository.Add(item.CorrelationID, item.OriginalURL, userID)
