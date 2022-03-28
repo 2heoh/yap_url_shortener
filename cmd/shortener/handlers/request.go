@@ -1,8 +1,12 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 	"io"
 	"log"
 	"net/http"
@@ -14,26 +18,67 @@ import (
 
 type Handler struct {
 	*chi.Mux
-	urls    services.Shorter
-	baseURL string
+	urls   services.Shorter
+	config *config.Config
 }
 
-func NewHandler(service services.Shorter, baseURL string) *Handler {
+func NewHandler(service services.Shorter, config *config.Config) *Handler {
 	h := &Handler{
-		Mux:     chi.NewMux(),
-		urls:    service,
-		baseURL: baseURL,
+		Mux:    chi.NewMux(),
+		urls:   service,
+		config: config,
 	}
 
 	h.Use(middleware.Logger)
+	h.Use(HandleSignedCookie)
+	h.Use(Zipper)
+
 	h.Post("/", h.PostURL)
+	h.Get("/ping", h.PingDB)
 	h.Post("/api/shorten", h.PostJSONURL)
 	h.Get("/{id}", h.GetURL)
+	h.Get("/api/user/urls", h.GetURLSForUser)
+	h.Post("/api/shorten/batch", h.PostBatch)
 	h.Get("/", func(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, "empty id", http.StatusBadRequest)
 	})
 
 	return h
+}
+
+func (h *Handler) GetURLSForUser(w http.ResponseWriter, r *http.Request) {
+	log.Printf(" UserID: %s ", UserID)
+	urls, err := h.urls.RetrieveURLsForUser(UserID)
+
+	if err != nil {
+		log.Printf("can't get urls: %v", err)
+	}
+
+	if len(urls) == 0 {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+
+	var result []entities.LinkItem
+	for _, url := range urls {
+		result = append(result, entities.LinkItem{
+			OriginalURL: url.OriginalURL,
+			ShortURL:    h.config.BaseURL + "/" + url.ShortURL,
+		})
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+
+	body, err := json.Marshal(result)
+	if err != nil {
+		log.Printf("json serialization error: %v", err)
+	}
+
+	_, err = w.Write(body)
+	if err != nil {
+		log.Printf("Error: %v", err)
+	}
 }
 
 func (h *Handler) GetURL(w http.ResponseWriter, r *http.Request) {
@@ -54,9 +99,8 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-
-	id, err := h.urls.CreateURL(string(b))
-
+	log.Printf("Body: '%s'", string(b))
+	id, err := h.urls.CreateURL(string(b), UserID)
 	if errors.Is(err, services.ErrEmptyURL) {
 		http.Error(w, "missed url", http.StatusBadRequest)
 
@@ -64,8 +108,12 @@ func (h *Handler) PostURL(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusCreated)
-	_, err = w.Write([]byte(fmt.Sprintf("%s/%s", h.baseURL, id)))
+	if errors.Is(err, repositories.ErrKeyExists) {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
+	_, err = w.Write([]byte(fmt.Sprintf("%s/%s", h.config.BaseURL, id)))
 
 	if err != nil {
 		log.Printf("Error: %v", err)

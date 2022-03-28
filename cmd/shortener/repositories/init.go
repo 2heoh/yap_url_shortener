@@ -9,10 +9,17 @@ import (
 func Init(cfg *config.Config) Repository {
 	if cfg.FileStoragePath != "" {
 		log.Printf("used file storage: %s", cfg.FileStoragePath)
+
 		return NewFileURLRepository(cfg.FileStoragePath)
 	}
 
-	log.Println("Use in memory storage")
-	return NewInmemoryURLRepository()
+	if cfg.DSN != "" {
+		log.Printf("used database: %s", cfg.DSN)
 
+		return NewDatabaseRepository(cfg.DSN)
+	}
+
+	log.Println("Use in memory storage")
+
+	return NewInmemoryURLRepository()
 }

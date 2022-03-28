@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/handlers"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/services"
 	"github.com/stretchr/testify/assert"
@@ -17,12 +19,37 @@ import (
 
 type TestableService struct{}
 
-func (tg *TestableService) CreateURL(url string) (string, error) {
+func (tg *TestableService) CreateBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
+
+	var items = []entities.ShortenURL{{Key: urls[0].CorrelationID}}
+
+	return items, nil
+}
+
+func (tg *TestableService) Ping() error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (tg *TestableService) CreateURL(url string, userID string) (string, error) {
 	if url == "" {
 		return "", services.ErrEmptyURL
 	}
 
 	return "test_url", nil
+}
+
+func (tg *TestableService) RetrieveURLsForUser(id string) ([]entities.LinkItem, error) {
+	if id == "non-existing" {
+		return nil, errors.New("id is not found: " + id)
+	}
+
+	url := entities.LinkItem{ShortURL: "test", OriginalURL: "https://example.com/"}
+
+	result := []entities.LinkItem{url}
+
+	return result, nil
+
 }
 
 func (tg *TestableService) RetrieveURL(id string) (string, error) {
@@ -40,9 +67,10 @@ type expected struct {
 }
 
 type request struct {
-	method string
-	path   string
-	body   io.Reader
+	method  string
+	path    string
+	body    io.Reader
+	headers map[string]string
 }
 
 func TestRequestHandler(t *testing.T) {
@@ -113,7 +141,7 @@ func TestRequestHandler(t *testing.T) {
 			},
 			expected: expected{
 				code:        201,
-				response:    "http://test/test_url",
+				response:    "http://test_host/test_url",
 				contentType: "text/html; charset=utf-8",
 			},
 		},
@@ -139,7 +167,7 @@ func TestRequestHandler(t *testing.T) {
 			},
 			expected: expected{
 				code:        201,
-				response:    `{"result":"http://test/test_url"}`,
+				response:    `{"result":"http://test_host/test_url"}`,
 				contentType: "application/json",
 			},
 		},
@@ -167,15 +195,37 @@ func TestRequestHandler(t *testing.T) {
 				code: 405,
 			},
 		},
+		{
+			name: "post request /api/shorten/batch with proper json return batch of shorten urls",
+			request: request{
+				method: http.MethodPost,
+				path:   "/api/shorten/batch",
+				body: strings.NewReader(
+					`[{"correlation_id": "test_key","original_url": "https://example.com"}]`,
+				),
+			},
+			expected: expected{
+				code:        201,
+				response:    `[{"correlation_id":"test_key","short_url":"http://test_host/test_key"}]`,
+				contentType: "application/json; charset=utf-8",
+			},
+		},
 	}
 	testURLService := &TestableService{}
+
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			r := handlers.NewHandler(testURLService, "http://test")
+			conf := &config.Config{BaseURL: "http://test_host"}
+			r := handlers.NewHandler(testURLService, conf)
 			ts := httptest.NewServer(r)
 			defer ts.Close()
 			req, err := http.NewRequest(tt.request.method, ts.URL+tt.request.path, tt.request.body)
+
+			//for _, key := range tt.request.headers {
+			//	req.Header.Set(key, tt.request.headers[key])
+			//}
+
 			require.NoError(t, err)
 			res, err := http.DefaultClient.Do(req)
 			assert.NoError(t, err)

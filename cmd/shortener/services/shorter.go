@@ -2,13 +2,18 @@ package services
 
 import (
 	"errors"
+	"log"
 
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 )
 
 type Shorter interface {
-	CreateURL(url string) (string, error)
+	CreateURL(url string, userID string) (string, error)
+	CreateBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error)
 	RetrieveURL(id string) (string, error)
+	RetrieveURLsForUser(id string) ([]entities.LinkItem, error)
+	Ping() error
 }
 
 var (
@@ -21,18 +26,27 @@ type ShorterURL struct {
 	repository repositories.Repository
 }
 
+func (s *ShorterURL) Ping() error {
+	return s.repository.Ping()
+}
+
 func NewShorterURL(repo repositories.Repository) *ShorterURL {
 	return &ShorterURL{repo}
 }
 
-func (s *ShorterURL) CreateURL(url string) (string, error) {
+func (s *ShorterURL) CreateURL(url string, userID string) (string, error) {
 	if url == "" {
 		return "", ErrEmptyURL
 	}
 
-	id := GenerateID(url)
+	var id = GenerateID(url)
 
-	s.repository.Add(id, url)
+	log.Printf("userID: %v", userID)
+
+	err := s.repository.Add(id, url, userID)
+	if err != nil {
+		return id, err
+	}
 
 	return id, nil
 }
@@ -48,4 +62,15 @@ func (s *ShorterURL) RetrieveURL(id string) (string, error) {
 	}
 
 	return url, nil
+}
+
+func (s *ShorterURL) RetrieveURLsForUser(id string) ([]entities.LinkItem, error) {
+	result := s.repository.GetAllFor(id)
+
+	return result, nil
+}
+
+func (s *ShorterURL) CreateBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
+
+	return s.repository.AddBatch(urls, userID)
 }

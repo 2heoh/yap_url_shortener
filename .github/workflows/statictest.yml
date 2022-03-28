@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - 3rd_sprint
 
 jobs:
 
@@ -22,6 +23,10 @@ jobs:
           latest: true
           fileName: statictest
           out-file-path: .tools
+
+      - name: Run existing test
+        run: |
+          go test ./...
 
       - name: Setup autotest binary
         run: |

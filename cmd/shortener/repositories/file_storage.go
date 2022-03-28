@@ -3,6 +3,7 @@ package repositories
 import (
 	"bufio"
 	"fmt"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
 	"io"
 	"log"
 	"os"
@@ -10,8 +11,9 @@ import (
 )
 
 type Row struct {
-	key string
-	url string
+	key    string
+	url    string
+	userID string
 }
 
 type FileURLRepository struct {
@@ -19,8 +21,54 @@ type FileURLRepository struct {
 	file *os.File
 }
 
+func (repo *FileURLRepository) AddBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
+
+	var result []entities.ShortenURL
+	for _, item := range urls {
+		err := repo.Add(item.CorrelationID, item.OriginalURL, userID)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, entities.ShortenURL{Key: item.CorrelationID})
+	}
+	return result, nil
+}
+
+func (repo *FileURLRepository) Ping() error {
+	return nil
+}
+
+func (repo *FileURLRepository) Add(key string, url string, userID string) error {
+	items, _ := repo.findRowBy(userID)
+
+	for _, item := range items {
+		if item.ShortURL == key {
+			return nil
+		}
+	}
+
+	fmt.Printf("new key: '%s' for '%s'\n", key, url)
+
+	return repo.writeRow(&Row{
+		key:    key,
+		url:    url,
+		userID: userID,
+	})
+}
+
+func (repo *FileURLRepository) GetAllFor(userID string) []entities.LinkItem {
+	rows, err := repo.findRowBy(userID)
+	if err != nil {
+		return nil
+	}
+
+	return rows
+}
+
 func NewFileURLRepository(filename string) Repository {
+
 	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+
 	if err != nil {
 		log.Fatalf("Producer error : %s", err)
 		return nil
@@ -30,21 +78,6 @@ func NewFileURLRepository(filename string) Repository {
 		file: file,
 		io:   bufio.NewReadWriter(bufio.NewReader(file), bufio.NewWriter(file)),
 	}
-}
-
-func (repo *FileURLRepository) Add(id string, url string) error {
-
-	_, err := repo.findRowByKey(id)
-
-	if err != nil && err.Error() == "id is not found: "+id {
-		fmt.Printf("new key: '%s' for '%s'\n", id, url)
-		return repo.writeRow(&Row{
-			key: id,
-			url: url,
-		})
-	}
-
-	return nil
 }
 
 func (repo *FileURLRepository) Get(key string) (string, error) {
@@ -64,6 +97,7 @@ func (repo *FileURLRepository) findRowByKey(key string) (*Row, error) {
 
 	for {
 		line, err := repo.io.ReadString('\n')
+
 		if err != nil {
 			if err == io.EOF {
 				return nil, fmt.Errorf("id is not found: %s", key)
@@ -81,8 +115,39 @@ func (repo *FileURLRepository) findRowByKey(key string) (*Row, error) {
 	}
 }
 
+func (repo *FileURLRepository) findRowBy(userID string) ([]entities.LinkItem, error) {
+	_, err := repo.file.Seek(0, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	var items []entities.LinkItem
+
+	for {
+		line, err := repo.io.ReadString('\n')
+		log.Printf("line: %s", line)
+
+		if err != nil {
+
+			if err == io.EOF {
+				return items, nil
+			}
+
+			return nil, err
+		}
+
+		if line != "" {
+			row := splitLine(strings.TrimSpace(line))
+
+			if userID == row.userID {
+				items = append(items, entities.LinkItem{ShortURL: row.key, OriginalURL: row.url})
+			}
+		}
+	}
+}
+
 func (repo *FileURLRepository) writeRow(r *Row) error {
-	line := fmt.Sprintf("%s;%s\n", r.key, r.url)
+	line := fmt.Sprintf("%s;%s;%s\n", r.userID, r.key, r.url)
 
 	_, err := repo.io.WriteString(line)
 	if err != nil {
@@ -96,7 +161,8 @@ func splitLine(line string) *Row {
 	parts := strings.Split(line, ";")
 
 	return &Row{
-		parts[0],
-		parts[1],
+		userID: parts[0],
+		key:    parts[1],
+		url:    parts[2],
 	}
 }

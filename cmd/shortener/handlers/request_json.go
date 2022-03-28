@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/2heoh/yap_url_shortener/cmd/shortener/repositories"
 	"io"
 	"log"
 	"net/http"
@@ -27,7 +28,7 @@ func (h *Handler) PostJSONURL(w http.ResponseWriter, r *http.Request) {
 
 		return
 	}
-
+	log.Printf("Body: '%s'", body)
 	request := JSONRequestBody{}
 	err = json.Unmarshal(body, &request)
 	if err != nil {
@@ -35,15 +36,23 @@ func (h *Handler) PostJSONURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := h.urls.CreateURL(request.URL)
-
+	id, err := h.urls.CreateURL(request.URL, UserID)
 	if errors.Is(err, services.ErrEmptyURL) {
 		h.ReturnJSONError(w, "missed url")
 
 		return
 	}
 
-	h.ReturnJSONResponse(w, h.baseURL+"/"+id)
+	w.Header().Set("Content-Type", "application/json")
+
+	if errors.Is(err, repositories.ErrKeyExists) {
+
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
+
+	h.ReturnJSONResponse(w, h.config.BaseURL+"/"+id)
 
 	if err != nil {
 		log.Printf("Error: %v", err)
@@ -69,8 +78,6 @@ func (h *Handler) ReturnJSONError(w http.ResponseWriter, message string) {
 }
 
 func (h *Handler) ReturnJSONResponse(w http.ResponseWriter, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
 
 	jsonResponse, err := json.Marshal(JSONResponseBody{Result: message})
 

@@ -15,6 +15,7 @@ func LoadArgs() (*Config, error) {
 	flag.Var(address, "a", "Server address host:port")
 	bURL := flag.String("b", baseURL, "Base Url")
 	path := flag.String("f", "", "file storage path")
+	dsn := flag.String("d", "", "database connection url")
 	flag.Parse()
 
 	if address.String() == ":0" {
@@ -26,5 +27,6 @@ func LoadArgs() (*Config, error) {
 		ServerAddress:   address.String(),
 		BaseURL:         *bURL,
 		FileStoragePath: *path,
+		DSN:             *dsn,
 	}, nil
 }

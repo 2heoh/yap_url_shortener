@@ -18,6 +18,7 @@ type Config struct {
 	ServerAddress   string `env:"SERVER_ADDRESS"`
 	BaseURL         string `env:"BASE_URL"`
 	FileStoragePath string `env:"FILE_STORAGE_PATH"`
+	DSN             string `env:"DATABASE_DSN"`
 }
 
 type NetAddress struct {
@@ -33,15 +34,16 @@ func (na *NetAddress) Set(flagValue string) error {
 	parts := strings.Split(flagValue, ":")
 	na.Host = parts[0]
 	port, err := strconv.Atoi(parts[1])
+
 	if err != nil {
 		return err
 	}
 	na.Port = port
+
 	return nil
 }
 
 func LoadEnvs(config *Config) (*Config, error) {
-
 	if err := env.Parse(config); err != nil {
 		return config, ErrConfigIsNotLoaded
 	}
