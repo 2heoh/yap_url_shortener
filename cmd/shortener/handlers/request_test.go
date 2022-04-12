@@ -57,6 +57,10 @@ func (tg *TestableService) RetrieveURL(id string) (string, error) {
 		return "", errors.New("id is not found: " + id)
 	}
 
+	if id == "deleted" {
+		return "", services.ErrDeletedID
+	}
+
 	return "https://example.com/", nil
 }
 

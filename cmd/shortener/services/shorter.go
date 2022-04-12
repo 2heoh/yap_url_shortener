@@ -14,16 +14,22 @@ type Shorter interface {
 	RetrieveURL(id string) (string, error)
 	RetrieveURLsForUser(id string) ([]entities.LinkItem, error)
 	Ping() error
+	DeleteBatch(keys []string, userID string) error
 }
 
 var (
 	ErrEmptyURL     = errors.New("url is empty")
 	ErrEmptyID      = errors.New("id is empty")
 	ErrIDIsNotFound = errors.New("id is not found")
+	ErrDeletedID    = errors.New("id deleted")
 )
 
 type ShorterURL struct {
 	repository repositories.Repository
+}
+
+func (s *ShorterURL) DeleteBatch(keys []string, userID string) error {
+	return s.repository.DeleteBatch(keys, userID)
 }
 
 func (s *ShorterURL) Ping() error {
@@ -57,11 +63,16 @@ func (s *ShorterURL) RetrieveURL(id string) (string, error) {
 	}
 
 	url, err := s.repository.Get(id)
+
+	if url.IsDeleted {
+		return "", ErrDeletedID
+	}
+
 	if err != nil {
 		return "", ErrIDIsNotFound
 	}
 
-	return url, nil
+	return url.OriginalURL, nil
 }
 
 func (s *ShorterURL) RetrieveURLsForUser(id string) ([]entities.LinkItem, error) {
@@ -71,6 +82,5 @@ func (s *ShorterURL) RetrieveURLsForUser(id string) ([]entities.LinkItem, error)
 }
 
 func (s *ShorterURL) CreateBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
-
 	return s.repository.AddBatch(urls, userID)
 }

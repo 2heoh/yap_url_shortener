@@ -11,6 +11,11 @@ import (
 
 type TestableRepo struct{}
 
+func (tr *TestableRepo) DeleteBatch(keys []string, userID string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (tr *TestableRepo) AddBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
 	//TODO implement me
 	panic("implement me")
@@ -35,15 +40,12 @@ func (tr *TestableRepo) GetAll(userID string) []entities.LinkItem {
 	panic("implement me")
 }
 
-//func (tr *TestableRepo) Add(url, id string) error {
-//	return nil
-//}
-func (tr *TestableRepo) Get(id string) (string, error) {
+func (tr *TestableRepo) Get(id string) (*entities.LinkItem, error) {
 	if id == "non-existing" {
-		return "", errors.New("id is not found: " + id)
+		return nil, errors.New("id is not found: " + id)
 	}
 
-	return "https://example.com/", nil
+	return &entities.LinkItem{id, "https://example.com/", false}, nil
 }
 func TestShorterURLCreation(t *testing.T) {
 	t.Parallel()

@@ -5,7 +5,7 @@ on:
   push:
     branches:
       - main
-      - 3rd_sprint
+      - 4th_sprint
 
 jobs:
 

@@ -16,23 +16,102 @@ var (
 	ErrKeyExists    = errors.New("key exists")
 )
 
-//type KeyExistsError struct {
-//	Key string
-//	Err error
-//}
-//
-//func (k *KeyExistsError) Error() string {
-//	return fmt.Sprintf("%s: %v", k.Err, k.Key)
-//}
-//
-//func NewKeyExistsError(key string, err error) error {
-//	return &KeyExistsError{Key: key, Err: err}
-//}
-
-const timeout = 5 * time.Second
+const (
+	timeout      = 5 * time.Second
+	workersCount = 1
+)
 
 type DBRepository struct {
-	connection *pgx.Conn
+	connection    *pgx.Conn
+	deleteChannel chan entities.DeleteCandidate
+}
+
+func NewDatabaseRepository(dsn string) Repository {
+	c := make(chan entities.DeleteCandidate)
+
+	repo := &DBRepository{
+		connection:    connect(dsn),
+		deleteChannel: c,
+	}
+
+	repo.init()
+
+	for i := 0; i < workersCount; i++ {
+		go func() {
+			log.Printf("start worker...")
+			for job := range c {
+				repo.makeDelete(job)
+			}
+		}()
+	}
+
+	return repo
+}
+
+func (r *DBRepository) makeDelete(candidate entities.DeleteCandidate) {
+	log.Printf("\\_/   %v \n", candidate)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	sql := "UPDATE  links SET deleted=true WHERE key=$1 and userid=$2"
+	ret, err := r.connection.Exec(ctx, sql, candidate.Key, candidate.UserID)
+
+	if err != nil {
+		log.Printf("can't update: [%T] %v", err, err.(*pgconn.PgError).Code)
+
+	}
+
+	log.Printf("update result: %v", ret)
+}
+
+func connect(dsn string) *pgx.Conn {
+	connection, err := pgx.Connect(context.Background(), dsn)
+	if err != nil {
+		log.Printf("Unable to connect to database: %v", err.Error())
+
+		return nil
+	}
+
+	return connection
+}
+
+func (r *DBRepository) init() {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
+	sql := `CREATE TABLE IF NOT EXISTS links(
+				userid varchar(16) NOT NULL,
+				key varchar(36) NOT NULL, 
+				url varchar(450) NOT NULL, 
+				deleted boolean DEFAULT FALSE,
+				PRIMARY KEY (key)
+            )`
+
+	_, err := r.connection.Exec(ctx, sql)
+	if err != nil {
+		log.Printf("init error: %v", err)
+	}
+
+}
+
+func (r *DBRepository) DeleteBatch(keys []string, userID string) error {
+
+	existsLinks := r.GetAllFor(userID)
+
+	if (len(existsLinks)) == 0 {
+		return errors.New("no links found")
+	}
+
+	for _, link := range existsLinks {
+		for _, key := range keys {
+			if link.ShortURL == key {
+				log.Printf("send delete: &{%v, %v}\n", key, userID)
+				r.deleteChannel <- entities.DeleteCandidate{Key: key, UserID: userID}
+			}
+		}
+	}
+
+	return nil
 }
 
 func (r *DBRepository) AddBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
@@ -63,50 +142,25 @@ func (r *DBRepository) AddBatch(urls []entities.URLItem, userID string) ([]entit
 	return result, nil
 }
 
-func NewDatabaseRepository(dsn string) Repository {
-	repo := &DBRepository{
-		connection: connect(dsn),
-	}
-
-	repo.init()
-
-	return repo
-}
-
-func (r *DBRepository) init() {
+func (r *DBRepository) Get(key string) (*entities.LinkItem, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
-	sql := `CREATE TABLE IF NOT EXISTS links(
-				userid varchar(16) NOT NULL,
-				key varchar(36) NOT NULL, 
-				url varchar(450) NOT NULL, 
-				PRIMARY KEY (key)
-            )`
+	sql := `select url, deleted from links where key = $1`
 
-	_, err := r.connection.Exec(ctx, sql)
-	if err != nil {
-		log.Printf("init error: %v", err)
-	}
-
-}
-
-func (r *DBRepository) Get(key string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-
-	sql := `select url from links where key = $1`
-
-	var url string
-	err := r.connection.QueryRow(ctx, sql, key).Scan(&url)
+	var (
+		url     string
+		deleted bool
+	)
+	err := r.connection.QueryRow(ctx, sql, key).Scan(&url, &deleted)
 
 	if err != nil {
 		log.Printf("can't get url: %v", err)
 
-		return "", err
+		return nil, err
 	}
 
-	return url, nil
+	return &entities.LinkItem{ShortURL: key, OriginalURL: url, IsDeleted: deleted}, nil
 }
 
 func (r *DBRepository) Add(key string, url string, userID string) error {
@@ -121,7 +175,7 @@ func (r *DBRepository) Add(key string, url string, userID string) error {
 
 		if err.(*pgconn.PgError).Code == "23505" {
 
-			log.Printf("Key alrady exists: %s", key)
+			log.Printf("Key already exists: %s", key)
 
 			return ErrKeyExists
 		}
@@ -167,15 +221,4 @@ func (r *DBRepository) Ping() error {
 	}
 
 	return r.connection.Ping(context.Background())
-}
-
-func connect(dsn string) *pgx.Conn {
-	connection, err := pgx.Connect(context.Background(), dsn)
-	if err != nil {
-		log.Printf("Unable to connect to database: %v", err.Error())
-
-		return nil
-	}
-
-	return connection
 }

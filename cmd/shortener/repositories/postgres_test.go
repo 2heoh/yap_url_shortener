@@ -15,3 +15,7 @@ func TestCheckDuplicate(t *testing.T) {
 
 	require.True(t, strings.Contains(message, "23505"))
 }
+
+func TestSendDelete(t *testing.T) {
+
+}

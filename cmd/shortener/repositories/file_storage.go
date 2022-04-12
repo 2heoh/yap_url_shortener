@@ -21,6 +21,11 @@ type FileURLRepository struct {
 	file *os.File
 }
 
+func (repo *FileURLRepository) DeleteBatch(keys []string, userID string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (repo *FileURLRepository) AddBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
 
 	var result []entities.ShortenURL
@@ -80,16 +85,16 @@ func NewFileURLRepository(filename string) Repository {
 	}
 }
 
-func (repo *FileURLRepository) Get(key string) (string, error) {
+func (repo *FileURLRepository) Get(key string) (*entities.LinkItem, error) {
 	row, err := repo.findRowByKey(key)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return row.url, nil
+	return row, nil
 }
 
-func (repo *FileURLRepository) findRowByKey(key string) (*Row, error) {
+func (repo *FileURLRepository) findRowByKey(key string) (*entities.LinkItem, error) {
 	_, err := repo.file.Seek(0, 0)
 	if err != nil {
 		return nil, err
@@ -109,7 +114,7 @@ func (repo *FileURLRepository) findRowByKey(key string) (*Row, error) {
 			row := splitLine(strings.TrimSpace(line))
 
 			if key == row.key {
-				return row, nil
+				return &entities.LinkItem{row.key, row.url, false}, nil
 			}
 		}
 	}

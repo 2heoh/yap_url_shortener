@@ -25,3 +25,6 @@ git fetch template && git checkout template/main .github
 ## Postgres
 
 docker run -d -e POSTGRES_PASSWORD=postgres -e PGDATA=/var/lib/postgresql/data/pgdata -v ${PWD}/db:/var/lib/postgresql/data -p5432:5432 postgres
+
+
+DATABASE_DSN=postgres://postgres:postgres@localhost:5432/links go run cmd/shortener/main.go
