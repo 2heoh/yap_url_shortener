@@ -11,6 +11,11 @@ import (
 
 type TestableRepo struct{}
 
+func (tr *TestableRepo) MakeDelete(candidate entities.DeleteCandidate) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (tr *TestableRepo) DeleteBatch(keys []string, userID string) error {
 	//TODO implement me
 	panic("implement me")
