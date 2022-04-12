@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"sync"
 	"time"
 
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
@@ -18,29 +19,41 @@ var (
 
 const (
 	timeout      = 5 * time.Second
-	workersCount = 1
+	workersCount = 5
 )
 
 type DBRepository struct {
 	connection    *pgx.Conn
 	deleteChannel chan entities.DeleteCandidate
+	locker        sync.Locker
 }
 
 func NewDatabaseRepository(dsn string) Repository {
-	c := make(chan entities.DeleteCandidate)
+	deleteChannel := make(chan entities.DeleteCandidate)
 
 	repo := &DBRepository{
 		connection:    connect(dsn),
-		deleteChannel: c,
+		deleteChannel: deleteChannel,
 	}
 
 	repo.init()
 
 	for i := 0; i < workersCount; i++ {
 		go func() {
+
+			defer func() {
+				if x := recover(); x != nil {
+					log.Printf("run time panic: %v", x)
+				}
+			}()
+
 			log.Printf("start worker...")
-			for job := range c {
-				repo.makeDelete(job)
+			for job := range deleteChannel {
+				if err := repo.makeDelete(job); err != nil {
+					time.Sleep(time.Second * 2)
+					log.Printf("retry...")
+					deleteChannel <- job
+				}
 			}
 		}()
 	}
@@ -48,7 +61,7 @@ func NewDatabaseRepository(dsn string) Repository {
 	return repo
 }
 
-func (r *DBRepository) makeDelete(candidate entities.DeleteCandidate) {
+func (r *DBRepository) makeDelete(candidate entities.DeleteCandidate) error {
 	log.Printf("\\_/   %v \n", candidate)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -57,11 +70,12 @@ func (r *DBRepository) makeDelete(candidate entities.DeleteCandidate) {
 	ret, err := r.connection.Exec(ctx, sql, candidate.Key, candidate.UserID)
 
 	if err != nil {
-		log.Printf("can't update: [%T] %v", err, err.(*pgconn.PgError).Code)
-
+		log.Printf("can't update: %v", err)
+		return err
 	}
 
 	log.Printf("update result: %v", ret)
+	return nil
 }
 
 func connect(dsn string) *pgx.Conn {
@@ -116,7 +130,6 @@ func (r *DBRepository) DeleteBatch(keys []string, userID string) error {
 
 func (r *DBRepository) AddBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
 	var result []entities.ShortenURL
-
 	ctx := context.Background()
 	tx, err := r.connection.Begin(ctx)
 	if err != nil {

@@ -114,7 +114,7 @@ func (repo *FileURLRepository) findRowByKey(key string) (*entities.LinkItem, err
 			row := splitLine(strings.TrimSpace(line))
 
 			if key == row.key {
-				return &entities.LinkItem{row.key, row.url, false}, nil
+				return &entities.LinkItem{ShortURL: row.key, OriginalURL: row.url}, nil
 			}
 		}
 	}
