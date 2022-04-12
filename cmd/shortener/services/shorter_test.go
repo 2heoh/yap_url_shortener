@@ -45,7 +45,7 @@ func (tr *TestableRepo) Get(id string) (*entities.LinkItem, error) {
 		return nil, errors.New("id is not found: " + id)
 	}
 
-	return &entities.LinkItem{id, "https://example.com/", false}, nil
+	return &entities.LinkItem{ShortURL: id, OriginalURL: "https://example.com/"}, nil
 }
 func TestShorterURLCreation(t *testing.T) {
 	t.Parallel()

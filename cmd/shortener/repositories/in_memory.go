@@ -97,7 +97,7 @@ func (r *InMemoryRepository) Add(id string, url string, userID string) error {
 
 func (r *InMemoryRepository) Get(id string) (*entities.LinkItem, error) {
 	if url, found := r.links[id]; found {
-		return &entities.LinkItem{id, url, false}, nil
+		return &entities.LinkItem{ShortURL: id, OriginalURL: url}, nil
 	}
 
 	return nil, ErrNotFound
