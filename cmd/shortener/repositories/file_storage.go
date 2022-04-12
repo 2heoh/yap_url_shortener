@@ -21,6 +21,11 @@ type FileURLRepository struct {
 	file *os.File
 }
 
+func (repo *FileURLRepository) MakeDelete(candidate entities.DeleteCandidate) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (repo *FileURLRepository) DeleteBatch(keys []string, userID string) error {
 	//TODO implement me
 	panic("implement me")

@@ -8,7 +8,7 @@ import (
 )
 
 func (h *Handler) PingDB(w http.ResponseWriter, r *http.Request) {
-	repo := repositories.NewDatabaseRepository(h.config.DSN)
+	repo := repositories.NewDatabaseRepository(h.config.DSN, nil)
 	if err := repo.Ping(); err != nil {
 		log.Printf("Ping error: %v", err)
 		http.Error(w, "can't connect to db", http.StatusInternalServerError)

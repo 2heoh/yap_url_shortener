@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
@@ -18,50 +17,27 @@ var (
 )
 
 const (
-	timeout      = 5 * time.Second
-	workersCount = 5
+	timeout = 5 * time.Second
 )
 
 type DBRepository struct {
 	connection    *pgx.Conn
 	deleteChannel chan entities.DeleteCandidate
-	locker        sync.Locker
 }
 
-func NewDatabaseRepository(dsn string) Repository {
-	deleteChannel := make(chan entities.DeleteCandidate)
+func NewDatabaseRepository(dsn string, channel chan entities.DeleteCandidate) Repository {
 
 	repo := &DBRepository{
 		connection:    connect(dsn),
-		deleteChannel: deleteChannel,
+		deleteChannel: channel,
 	}
 
 	repo.init()
 
-	for i := 0; i < workersCount; i++ {
-		go func() {
-
-			defer func() {
-				if x := recover(); x != nil {
-					log.Printf("run time panic: %v", x)
-				}
-			}()
-
-			log.Printf("start worker...")
-			for job := range deleteChannel {
-				if err := repo.makeDelete(job); err != nil {
-					time.Sleep(time.Second * 2)
-					log.Printf("retry...")
-					deleteChannel <- job
-				}
-			}
-		}()
-	}
-
 	return repo
 }
 
-func (r *DBRepository) makeDelete(candidate entities.DeleteCandidate) error {
+func (r *DBRepository) MakeDelete(candidate entities.DeleteCandidate) error {
 	log.Printf("\\_/   %v \n", candidate)
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
@@ -75,6 +51,7 @@ func (r *DBRepository) makeDelete(candidate entities.DeleteCandidate) error {
 	}
 
 	log.Printf("update result: %v", ret)
+
 	return nil
 }
 

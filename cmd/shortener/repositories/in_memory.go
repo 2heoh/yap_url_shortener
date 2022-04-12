@@ -34,7 +34,6 @@ func (r *InMemoryRepository) DeleteBatch(keys []string, userID string) error {
 					if id == item.ShortURL {
 						log.Printf("  * %v \n", id)
 						r.deleteChannel <- entities.DeleteCandidate{Key: id, UserID: userID}
-						//r.linksByUser[userID][i].IsDeleted = true
 					}
 				}
 			}
@@ -46,8 +45,7 @@ func (r *InMemoryRepository) DeleteBatch(keys []string, userID string) error {
 	return nil
 }
 
-func (r *InMemoryRepository) ProcessDelete() {
-	candidate := <-r.deleteChannel
+func (r *InMemoryRepository) MakeDelete(candidate entities.DeleteCandidate) error {
 	log.Printf("  -> %v \n", candidate)
 
 	if urls, found := r.linksByUser[candidate.UserID]; found {
@@ -60,6 +58,7 @@ func (r *InMemoryRepository) ProcessDelete() {
 	}
 
 	r.Wg.Done()
+	return nil
 }
 
 func (r *InMemoryRepository) AddBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {

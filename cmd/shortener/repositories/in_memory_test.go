@@ -39,8 +39,8 @@ func TestAddToRepository(t *testing.T) {
 //	require.NoError(t, err)
 //	require.False(t, link.IsDeleted)
 //
-//	repository.ProcessDelete()
-//	repository.ProcessDelete()
+//	repository.MakeDelete()
+//	repository.MakeDelete()
 //
 //	link1 := repository.GetShortenURL("a", "1")
 //	link2 := repository.GetShortenURL("b", "1")
