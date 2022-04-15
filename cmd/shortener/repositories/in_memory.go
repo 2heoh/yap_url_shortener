@@ -2,47 +2,20 @@ package repositories
 
 import (
 	"errors"
-	"log"
-	"sync"
-
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
+	"log"
 )
 
 type InMemoryRepository struct {
-	links         map[string]string
-	linksByUser   map[string][]entities.LinkItem
-	deleteChannel chan entities.DeleteCandidate
-	Wg            *sync.WaitGroup
+	links       map[string]string
+	linksByUser map[string][]entities.LinkItem
 }
 
 func NewInmemoryURLRepository() Repository {
 	return &InMemoryRepository{
-		map[string]string{"yandex": "https://yandex.ru/"},
-		map[string][]entities.LinkItem{"1": nil},
-		make(chan entities.DeleteCandidate),
-		&sync.WaitGroup{},
+		map[string]string{},
+		map[string][]entities.LinkItem{},
 	}
-}
-
-func (r *InMemoryRepository) DeleteBatch(keys []string, userID string) error {
-	if urls, found := r.linksByUser[userID]; found {
-		log.Printf(" %v ", r.linksByUser[userID])
-		r.Wg.Add(len(keys))
-		go func() {
-			for _, item := range urls {
-				for _, id := range keys {
-					if id == item.ShortURL {
-						log.Printf("  * %v \n", id)
-						r.deleteChannel <- entities.DeleteCandidate{Key: id, UserID: userID}
-					}
-				}
-			}
-		}()
-	} else {
-		return errors.New("No such userID: " + userID)
-	}
-
-	return nil
 }
 
 func (r *InMemoryRepository) MakeDelete(candidate entities.DeleteCandidate) error {
@@ -57,7 +30,6 @@ func (r *InMemoryRepository) MakeDelete(candidate entities.DeleteCandidate) erro
 		}
 	}
 
-	r.Wg.Done()
 	return nil
 }
 

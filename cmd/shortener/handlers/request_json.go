@@ -52,7 +52,7 @@ func (h *Handler) PostJSONURL(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusCreated)
 	}
 
-	h.ReturnJSONResponse(w, h.config.BaseURL+"/"+id)
+	h.ReturnJSONResponse(w, h.config.BaseURL+"/"+id, 0)
 
 	if err != nil {
 		log.Printf("Error: %v", err)
@@ -77,9 +77,11 @@ func (h *Handler) ReturnJSONError(w http.ResponseWriter, message string) {
 
 }
 
-func (h *Handler) ReturnJSONResponse(w http.ResponseWriter, message string) {
+func (h *Handler) ReturnJSONResponse(w http.ResponseWriter, resultMessage string, httpStatus int) {
 
-	jsonResponse, err := json.Marshal(JSONResponseBody{Result: message})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(httpStatus)
+	jsonResponse, err := json.Marshal(JSONResponseBody{Result: resultMessage})
 
 	if err != nil {
 		log.Printf("Error: %v", err)

@@ -10,6 +10,5 @@ type Repository interface {
 	AddBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error)
 	GetAllFor(userID string) []entities.LinkItem
 	Ping() error
-	DeleteBatch(keys []string, userID string) error
 	MakeDelete(candidate entities.DeleteCandidate) error
 }

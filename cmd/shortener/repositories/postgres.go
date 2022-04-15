@@ -3,12 +3,12 @@ package repositories
 import (
 	"context"
 	"errors"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"log"
 	"time"
 
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/entities"
 	"github.com/jackc/pgconn"
-	"github.com/jackc/pgx/v4"
 )
 
 var (
@@ -21,15 +21,13 @@ const (
 )
 
 type DBRepository struct {
-	connection    *pgx.Conn
-	deleteChannel chan entities.DeleteCandidate
+	connection *pgxpool.Pool
 }
 
-func NewDatabaseRepository(dsn string, channel chan entities.DeleteCandidate) Repository {
+func NewDatabaseRepository(dsn string) Repository {
 
 	repo := &DBRepository{
-		connection:    connect(dsn),
-		deleteChannel: channel,
+		connection: connect(dsn),
 	}
 
 	repo.init()
@@ -55,8 +53,8 @@ func (r *DBRepository) MakeDelete(candidate entities.DeleteCandidate) error {
 	return nil
 }
 
-func connect(dsn string) *pgx.Conn {
-	connection, err := pgx.Connect(context.Background(), dsn)
+func connect(dsn string) *pgxpool.Pool {
+	connection, err := pgxpool.Connect(context.Background(), dsn)
 	if err != nil {
 		log.Printf("Unable to connect to database: %v", err.Error())
 
@@ -85,25 +83,25 @@ func (r *DBRepository) init() {
 
 }
 
-func (r *DBRepository) DeleteBatch(keys []string, userID string) error {
-
-	existsLinks := r.GetAllFor(userID)
-
-	if (len(existsLinks)) == 0 {
-		return errors.New("no links found")
-	}
-
-	for _, link := range existsLinks {
-		for _, key := range keys {
-			if link.ShortURL == key {
-				log.Printf("send delete: &{%v, %v}\n", key, userID)
-				r.deleteChannel <- entities.DeleteCandidate{Key: key, UserID: userID}
-			}
-		}
-	}
-
-	return nil
-}
+//func (r *DBRepository) DeleteBatch(keys []string, userID string) error {
+//
+//	existsLinks := r.GetAllFor(userID)
+//
+//	if (len(existsLinks)) == 0 {
+//		return errors.New("no links found")
+//	}
+//
+//	for _, link := range existsLinks {
+//		for _, key := range keys {
+//			if link.ShortURL == key {
+//				log.Printf("send delete: &{%v, %v}\n", key, userID)
+//				r.deleteChannel <- entities.DeleteCandidate{Key: key, UserID: userID}
+//			}
+//		}
+//	}
+//
+//	return nil
+//}
 
 func (r *DBRepository) AddBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
 	var result []entities.ShortenURL

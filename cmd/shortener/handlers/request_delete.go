@@ -8,6 +8,10 @@ import (
 	"net/http"
 )
 
+type Response struct {
+	result string `json:"result"`
+}
+
 func (h *Handler) DeleteBatch(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -30,11 +34,5 @@ func (h *Handler) DeleteBatch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	_, err = w.Write([]byte(`{"result":"ok"}`))
-
-	if err != nil {
-		log.Printf("Error: %v", err)
-	}
+	h.ReturnJSONResponse(w, "ok", http.StatusAccepted)
 }

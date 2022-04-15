@@ -55,7 +55,7 @@ func (tr *TestableRepo) Get(id string) (*entities.LinkItem, error) {
 func TestShorterURLCreation(t *testing.T) {
 	t.Parallel()
 
-	service := services.NewShorterURL(&TestableRepo{})
+	service := services.NewShorterURL(&TestableRepo{}, nil)
 
 	id, err := service.CreateURL("https://example.com", "1")
 
@@ -66,7 +66,7 @@ func TestShorterURLCreation(t *testing.T) {
 func TestShorterURLCreationWhenURLIsEmpty(t *testing.T) {
 	t.Parallel()
 
-	service := services.NewShorterURL(&TestableRepo{})
+	service := services.NewShorterURL(&TestableRepo{}, nil)
 
 	id, err := service.CreateURL(string([]byte{}), "1")
 
@@ -78,7 +78,7 @@ func TestShorterURLCreationWhenURLIsEmpty(t *testing.T) {
 func TestShorterURLRetrieving(t *testing.T) {
 	t.Parallel()
 
-	service := services.NewShorterURL(&TestableRepo{})
+	service := services.NewShorterURL(&TestableRepo{}, nil)
 
 	url, err := service.RetrieveURL("test")
 
@@ -89,7 +89,7 @@ func TestShorterURLRetrieving(t *testing.T) {
 func TestShorterURLRetrievingEmptyID(t *testing.T) {
 	t.Parallel()
 
-	service := services.NewShorterURL(&TestableRepo{})
+	service := services.NewShorterURL(&TestableRepo{}, nil)
 
 	url, err := service.RetrieveURL("")
 

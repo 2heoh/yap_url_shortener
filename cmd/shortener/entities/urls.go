@@ -22,6 +22,7 @@ type ShortenURL struct {
 }
 
 type DeleteCandidate struct {
-	Key    string
-	UserID string
+	Key        string
+	UserID     string
+	RetryCount int8
 }
