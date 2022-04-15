@@ -8,10 +8,6 @@ import (
 	"net/http"
 )
 
-type Response struct {
-	result string `json:"result"`
-}
-
 func (h *Handler) DeleteBatch(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
