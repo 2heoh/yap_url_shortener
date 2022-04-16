@@ -24,7 +24,7 @@ func TestFileStorageNonEmptyStorageWriteAndReadOneURL(t *testing.T) {
 	url, err := repository.Get("test")
 
 	require.NoError(t, err)
-	require.Equal(t, "https://example.com", url)
+	require.Equal(t, "https://example.com", url.OriginalURL)
 }
 
 func TestFileStorageEmptyStorageWriteAndReadTwoURLs(t *testing.T) {
@@ -44,7 +44,7 @@ func TestFileStorageEmptyStorageWriteAndReadTwoURLs(t *testing.T) {
 	url, err := repository.Get("test")
 
 	require.NoError(t, err)
-	require.Equal(t, "https://example.com", url)
+	require.Equal(t, "https://example.com", url.OriginalURL)
 
 	err = repository.Add("test2", "https://example2.com", "2")
 	require.NoError(t, err)
@@ -52,7 +52,7 @@ func TestFileStorageEmptyStorageWriteAndReadTwoURLs(t *testing.T) {
 	url, err = repository.Get("test2")
 
 	require.NoError(t, err)
-	require.Equal(t, "https://example2.com", url)
+	require.Equal(t, "https://example2.com", url.OriginalURL)
 }
 
 func TestFileStorageWithExistingStorageAddingSameRecord(t *testing.T) {

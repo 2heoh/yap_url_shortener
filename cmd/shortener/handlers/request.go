@@ -39,6 +39,7 @@ func NewHandler(service services.Shorter, config *config.Config) *Handler {
 	h.Get("/{id}", h.GetURL)
 	h.Get("/api/user/urls", h.GetURLSForUser)
 	h.Post("/api/shorten/batch", h.PostBatch)
+	h.Delete("/api/user/urls", h.DeleteBatch)
 	h.Get("/", func(w http.ResponseWriter, request *http.Request) {
 		http.Error(w, "empty id", http.StatusBadRequest)
 	})
@@ -84,7 +85,15 @@ func (h *Handler) GetURLSForUser(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetURL(w http.ResponseWriter, r *http.Request) {
 	url, err := h.urls.RetrieveURL(chi.URLParam(r, "id"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+
+		if errors.Is(err, services.ErrDeletedID) {
+			http.Error(w, err.Error(), http.StatusGone)
+		} else if errors.Is(err, services.ErrIDIsNotFound) {
+			http.Error(w, err.Error(), http.StatusNotFound)
+		} else {
+			log.Printf("* Error: %v\n", err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 
 		return
 	}

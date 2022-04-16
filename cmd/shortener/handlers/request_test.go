@@ -1,7 +1,6 @@
 package handlers_test
 
 import (
-	"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -41,7 +40,7 @@ func (tg *TestableService) CreateURL(url string, userID string) (string, error) 
 
 func (tg *TestableService) RetrieveURLsForUser(id string) ([]entities.LinkItem, error) {
 	if id == "non-existing" {
-		return nil, errors.New("id is not found: " + id)
+		return nil, services.ErrIDIsNotFound
 	}
 
 	url := entities.LinkItem{ShortURL: "test", OriginalURL: "https://example.com/"}
@@ -54,7 +53,11 @@ func (tg *TestableService) RetrieveURLsForUser(id string) ([]entities.LinkItem, 
 
 func (tg *TestableService) RetrieveURL(id string) (string, error) {
 	if id == "non-existing" {
-		return "", errors.New("id is not found: " + id)
+		return "", services.ErrIDIsNotFound
+	}
+
+	if id == "deleted" {
+		return "", services.ErrDeletedID
 	}
 
 	return "https://example.com/", nil
@@ -107,7 +110,7 @@ func TestRequestHandler(t *testing.T) {
 			},
 		},
 		{
-			name: "get request with not-existing id",
+			name: "get request with non-existing id",
 			request: request{
 				path:   "/non-existing",
 				method: http.MethodGet,
@@ -115,7 +118,7 @@ func TestRequestHandler(t *testing.T) {
 			},
 			expected: expected{
 				code:        404,
-				response:    "id is not found: non-existing\n",
+				response:    "id is not found\n",
 				contentType: "text/plain; charset=utf-8",
 			},
 		},

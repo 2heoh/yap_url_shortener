@@ -11,6 +11,16 @@ import (
 
 type TestableRepo struct{}
 
+func (tr *TestableRepo) MakeDelete(candidate entities.DeleteCandidate) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (tr *TestableRepo) DeleteBatch(keys []string, userID string) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func (tr *TestableRepo) AddBatch(urls []entities.URLItem, userID string) ([]entities.ShortenURL, error) {
 	//TODO implement me
 	panic("implement me")
@@ -35,20 +45,17 @@ func (tr *TestableRepo) GetAll(userID string) []entities.LinkItem {
 	panic("implement me")
 }
 
-//func (tr *TestableRepo) Add(url, id string) error {
-//	return nil
-//}
-func (tr *TestableRepo) Get(id string) (string, error) {
+func (tr *TestableRepo) Get(id string) (*entities.LinkItem, error) {
 	if id == "non-existing" {
-		return "", errors.New("id is not found: " + id)
+		return nil, errors.New("id is not found: " + id)
 	}
 
-	return "https://example.com/", nil
+	return &entities.LinkItem{ShortURL: id, OriginalURL: "https://example.com/"}, nil
 }
 func TestShorterURLCreation(t *testing.T) {
 	t.Parallel()
 
-	service := services.NewShorterURL(&TestableRepo{})
+	service := services.NewShorterURL(&TestableRepo{}, nil)
 
 	id, err := service.CreateURL("https://example.com", "1")
 
@@ -59,7 +66,7 @@ func TestShorterURLCreation(t *testing.T) {
 func TestShorterURLCreationWhenURLIsEmpty(t *testing.T) {
 	t.Parallel()
 
-	service := services.NewShorterURL(&TestableRepo{})
+	service := services.NewShorterURL(&TestableRepo{}, nil)
 
 	id, err := service.CreateURL(string([]byte{}), "1")
 
@@ -71,7 +78,7 @@ func TestShorterURLCreationWhenURLIsEmpty(t *testing.T) {
 func TestShorterURLRetrieving(t *testing.T) {
 	t.Parallel()
 
-	service := services.NewShorterURL(&TestableRepo{})
+	service := services.NewShorterURL(&TestableRepo{}, nil)
 
 	url, err := service.RetrieveURL("test")
 
@@ -82,7 +89,7 @@ func TestShorterURLRetrieving(t *testing.T) {
 func TestShorterURLRetrievingEmptyID(t *testing.T) {
 	t.Parallel()
 
-	service := services.NewShorterURL(&TestableRepo{})
+	service := services.NewShorterURL(&TestableRepo{}, nil)
 
 	url, err := service.RetrieveURL("")
 

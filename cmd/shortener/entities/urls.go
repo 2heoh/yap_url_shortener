@@ -13,8 +13,16 @@ type URLItem struct {
 type LinkItem struct {
 	ShortURL    string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
+	IsDeleted   bool
 }
 
 type ShortenURL struct {
-	Key string
+	Key       string
+	IsDeleted bool
+}
+
+type DeleteCandidate struct {
+	Key        string
+	UserID     string
+	RetryCount int8
 }

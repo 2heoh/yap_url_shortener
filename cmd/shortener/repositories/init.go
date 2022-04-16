@@ -1,9 +1,8 @@
 package repositories
 
 import (
-	"log"
-
 	"github.com/2heoh/yap_url_shortener/cmd/shortener/config"
+	"log"
 )
 
 func Init(cfg *config.Config) Repository {
